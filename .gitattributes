@@ -5,4 +5,4 @@
 *.styl linguist-vendored
 *.php linguist-vendored
 *.less linguist-vendored
-*.Java linguist-vendored=false
+*.java linguist-vendored=false
