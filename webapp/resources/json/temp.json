@@ -1,0 +1,22 @@
+[
+	{
+		"label": "java",
+		"value": "java",
+		"imgPath": "/resources/images/skill/java.png"
+	},
+	{
+		"label": "javascript",
+		"value": "javascript",
+		"imgPath": "/resources/images/skill/javascript.png"
+	},
+	{
+		"label": "spring",
+		"value": "spring",
+		"imgPath": "/resources/images/skill/springframework.png"
+	},
+	{
+		"label": "html5",
+		"value": "html5",
+		"imgPath": "/resources/images/skill/html5.png"
+	}
+]

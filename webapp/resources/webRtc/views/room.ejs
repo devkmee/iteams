@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link type="image/png" href="https://i.pinimg.com/originals/22/e4/e0/22e4e079c332b3f3589f4a8b73545076.png" rel="icon"> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script>
+    const ROOM_ID = "<%= roomId %>"
+  </script>
+
+ 
+  
+  <title>Video Calling App</title>
+  <style>
+    /*#video-grid {
+      display: grid;
+      bottom: 100px;
+      grid-template-columns: repeat(auto-fill, 100%);
+      grid-auto-rows: 90%;
+    }*/
+    * {
+      box-sizing: border-box;
+      
+    }
+    body{
+      background-color: #333;
+    }
+    .row{
+      padding-bottom: 90px;
+      
+    }
+    /* Create four equal columns that floats next to each other */
+    .column {
+      float: left;
+      border-radius: 3em;
+      padding: 10px 5px;
+      margin: 5px;
+      box-shadow: 2px 2px 2px 3px antiquewhite;
+      overflow: hidden;
+      width: 25%;
+    }
+    
+    /* Clear floats after the columns */
+    .row:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    
+    /* Responsive layout - makes a two column-layout instead of four columns */
+    @media screen and (max-width: 900px) {
+      .column  {
+        width: 50%;
+        
+      }
+      .label{
+        width: 50%;
+      }
+    }
+    
+    /* Responsive layout - makes the two columns stack on top of each other instead of next to each other */
+    @media screen and (max-width: 600px) {
+      .column  {
+        width: 100%;
+        
+      }
+      .label{
+        width: 100%;
+      }
+    }
+    video {
+      width: 100%;
+      border-radius: 2em;
+      height: 300px;
+      transform: rotateY(180deg);
+      object-fit: cover;
+    }
+    .label{
+      width: 25%;
+      margin: auto;
+      display: flex;
+      align-items: center;
+    }
+    .label label,img{
+      flex: 1;
+      color: antiquewhite;
+      padding: 5px 5px;
+    }
+    #bottom-nav{
+      position: fixed;
+      text-align: center;
+      margin: auto;
+      bottom: 0;
+      left: 0;
+      display: inline-block;
+      background-color :antiquewhite;
+      right: 0;
+      height: 70px;
+      width: 100%;
+    }
+    button{
+      border: none;
+      align-items: center;
+      border-radius: 10em;
+      background-color: #fff;
+    }
+    #dpimg{
+      border-radius: 10em;
+      width: 40px;
+      height: 40px;
+    }
+    #end{
+      height: 50px;
+      width: 100px;
+      background-color: red;
+      color: #fff;
+      border: #fff;
+    }
+    
+    input{
+      width: 60px;
+      border-radius: 10em;
+      height: 60px;
+    }
+    #main {
+      width: fit-content;
+      height: fit-content;
+      margin: auto;
+      padding: 10px 10px;
+      display: flex;
+      align-items: center;
+    }
+    
+    #main input {
+      padding: 5px 5px;
+       flex: 1;
+    }
+    #header{
+     
+      background-color:antiquewhite;
+      color: #333;
+      width: 200px;
+      display: flex;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+    #roomId{
+      width: fit-content;
+      height: 30px;
+      border: none;
+      display: none;
+      background-color: antiquewhite;
+      outline: none;
+      border-radius: 1em;
+    }
+    #copy{
+      width: 30px;
+      height: 30px;
+      border: none;
+      background-color: antiquewhite;
+      right: 0;
+      z-index: 3;
+      position: absolute;
+      float: right;
+      border-radius: 2px;
+    }
+  </style>
+  <script src="/socket.io/socket.io.js" ></script>
+</head>
+<body>
+  <div id="header">
+   
+    <input type="text" value="<%= roomId %>" id="roomId" >
+    
+  </div>
+  <div id="video-grid" class="row">
+    
+      <div class="column">
+        
+      <video id="localVideo" muted autoplay></video>
+      <div class="label">
+        <img src="person" id="dpimg">
+        <label  id="label"></label>
+      </div>
+      </div>
+  
+  </div>
+  <div id="bottom-nav">
+    <div id="main">
+      <input type="image" src="micon" id="micon">
+      <input type="image" src="videoon" id="videoon" >
+      <input type="image" src="share" id="shareScreen">
+      <input type="button" id="end" value="End" >
+      <input type="image" value="<%= roomId %>" id="copy" src="copy">
+     <!-- <input type="button" id="roomId" value="Room Id">-->
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
