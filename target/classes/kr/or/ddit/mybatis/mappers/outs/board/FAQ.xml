@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.qna.dao.FAQDAO">
+
+<sql id="searchWhere">
+	<trim prefix="AND">
+		<if test="detailSearch neq null">
+			QQ.QNA_KEYWORD = #{detailSearch}
+		</if>
+	</trim>
+</sql>
+
+<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM
+		GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON(GG.BO_NUM = QQ.BO_NUM)
+	WHERE GG.BO_CODE = #{boCode}
+	AND GG.PUBLIC_NY = 'Y'
+	AND GG.DELETED_NY = 'N'
+	<include refid="searchWhere"></include>
+</select>
+
+<select id="selectFAQList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+			  GG.BO_NUM
+			, GG.MEM_ID
+			, GG.BO_TITLE
+			, TO_CHAR(GG.WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE
+			, GG.MODIFY_MEMBER
+			, TO_CHAR(GG.MODIFY_DATE, 'YYYY.MM.DD') AS MODIFY_DATE
+			, GG.BO_HIT
+			, QQ.QNA_KEYWORD
+		FROM GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON(GG.BO_NUM = QQ.BO_NUM)
+		WHERE GG.BO_CODE = #{boCode}
+		AND GG.PUBLIC_NY = 'Y'
+		AND GG.DELETED_NY = 'N'
+		<include refid="searchWhere"></include>
+		ORDER BY GG.BO_NUM DESC
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectFAQ" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		  GG.BO_NUM
+		, MEM_ID
+		, BO_TITLE
+		, BO_CONTENT
+		, TO_CHAR(WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE
+		, MODIFY_MEMBER
+		, TO_CHAR(MODIFY_DATE, 'YYYY.MM.DD') AS MODIFY_DATE
+		, BO_HIT
+		, PUBLIC_NY
+		, QQ.BO_PARENT
+		, QQ.QNA_KEYWORD
+		, QQ.QNA_ADMIN
+	FROM
+		GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON(GG.BO_NUM = QQ.BO_NUM)
+	WHERE
+		GG.BO_NUM = #{boNum}
+		AND PUBLIC_NY = 'Y'
+</select>
+
+<update id="incrementCount" parameterType="Map">
+	UPDATE GEN_BOARD
+	SET	
+		${incType} = ${incType} + 1
+	WHERE BO_NUM = #{boNum}
+</update>
+
+<insert id="insertFAQ" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+<selectKey keyProperty="boNum" resultType="String" order="BEFORE">
+	SELECT GBOARD_SEQ.NEXTVAL AS BO_NUM
+	FROM DUAL
+</selectKey>
+	INSERT ALL
+		INTO
+		GEN_BOARD (
+			  BO_NUM
+			, BO_CODE
+			, MEM_ID
+			, BO_TITLE
+			, BO_CONTENT
+			, WRITE_DATE
+			, MODIFY_MEMBER
+			, MODIFY_DATE
+			, DELETED_NY
+			, DELETE_MEMBER
+			, DELETE_DATE
+			, BO_HIT
+			, BO_REC
+			, BO_REP
+			, PUBLIC_NY
+		)
+	VALUES(
+		  #{boNum}
+		, #{boCode}
+		, #{memId}
+		, #{boTitle}
+		, #{boContent}
+		, SYSDATE
+		, NULL
+		, NULL
+		, 'N'
+		, NULL
+		, NULL
+		, 0
+		, 0
+		, 0
+		, 'Y'
+	)
+		INTO
+			QNA_BOARD
+		(
+			BO_NUM
+			, BO_PARENT
+			, QNA_KEYWORD
+			, QNA_ADMIN
+		)
+	VALUES(
+		  #{boNum}
+		, NULL
+		, #{qnaKeyword}
+		, NULL
+	)
+	SELECT * FROM DUAL
+</insert>
+
+<update id="updateGenboard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		GEN_BOARD
+	SET
+		  BO_TITLE = #{boTitle}
+		, BO_CONTENT = #{boContent}
+		, MODIFY_MEMBER = #{memId}
+		, MODIFY_DATE = SYSDATE
+	WHERE
+		BO_NUM = #{boNum}
+</update>
+<update id="updateQnaboard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		QNA_BOARD
+	SET
+		QNA_KEYWORD = #{qnaKeyword}
+	WHERE
+		BO_NUM = #{boNum}
+</update>
+
+<update id="deleteFAQ" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		GEN_BOARD
+	SET
+		  DELETED_NY = 'Y'
+		, DELETE_MEMBER = #{memId}
+		, DELETE_DATE = SYSDATE
+		, PUBLIC_NY = 'N'
+	WHERE
+		BO_NUM = #{boNum}
+</update>
+
+</mapper>

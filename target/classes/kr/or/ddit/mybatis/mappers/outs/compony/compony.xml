@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.company.dao.CompanyDAO">
+
+<sql id="searchWhere">
+	<trim prefix="WHERE">
+		<if test="searchVO neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+			INSTR(CLIENT_NAME, #{searchVO.searchWord}) > 0
+			OR
+			INSTR(CLIENT_ADD, #{searchVO.searchWord}) > 0
+		</if>
+	</trim>
+</sql>
+
+<select id="selectTotalRecord" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		CLIENT CC LEFT OUTER JOIN MEMBER MM ON ( MM.MEM_ID = CC.CLI_ID)
+	<include refid="searchWhere"></include>
+</select>
+
+<select id="selectCompanyRank" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  CLIENT_NAME
+			     ,NVL(TRUNC(AVG(REVIEW_SCORE), 2),0) AS REVIEW_COUNT
+	      FROM REVIEW RR LEFT OUTER JOIN CLIENT CC ON(RR.CLI_ID = CC.CLI_ID)
+	     GROUP BY CLIENT_NAME
+	     ORDER BY REVIEW_COUNT DESC
+		) A
+	) B
+		WHERE RNUM BETWEEN 1 AND 5
+</select>
+
+<select id="selectComponyList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  CLI_ID
+				, CLIENT_NAME
+				, CLIENT_ADD
+				, CLIENT_CEO
+				, CLIENT_SCALE
+				,(
+					SELECT NVL(TRUNC(AVG(REVIEW_SCORE), 2),0)
+					 FROM REVIEW RR WHERE RR.CLI_ID = CC.CLI_ID
+		     	) AS REVIEW_SCORE
+		FROM 
+			CLIENT CC LEFT OUTER JOIN MEMBER MM ON ( MM.MEM_ID = CC.CLI_ID)
+		<include refid="searchWhere"></include>
+		ORDER BY REVIEW_SCORE DESC
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectCompony" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		  CLI_ID
+		, CLIENT_NAME
+		, CLIENT_ADD
+		, CLIENT_CEO
+		, CLIENT_HOMEPAGE
+		, CLIENT_SCALE
+		, TO_CHAR(CLIENT_ANNI, 'YYYY.MM.DD') AS CLIENT_ANNI
+		, CLIENT_SALES
+		, CLIENT_ZIP
+		, CLIENT_ADDRET
+		, CLIENT_ADDX
+		, CLIENT_ADDY
+		, MEM_TEL
+		, MEM_MAIL
+		, (
+			SELECT NVL(TRUNC(AVG(REVIEW_SCORE), 2),0)
+			 FROM REVIEW WHERE CLI_ID = #{cliId}
+     	) AS REVIEW_SCORE
+	FROM
+		CLIENT CC LEFT OUTER JOIN MEMBER MM ON (CC.CLI_ID = MM.MEM_ID)
+	WHERE
+		CLI_ID = #{cliId}
+</select>
+
+<select id="selectReviewTotalRecord" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		REVIEW
+	WHERE CLI_ID = #{cliId}
+	
+</select>
+
+<select id="selectReviewList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  REV_NO
+				, MEM_WRITE
+				, CLI_ID
+				, TO_CHAR(WRITE_DATE, 'YY.MM.DD') AS WRITE_DATE
+				, REVIEW_CONTENT
+				, REVIEW_SCORE
+				, DELETED_NY
+				, DELETE_DATE
+			FROM
+				REVIEW
+			WHERE
+				CLI_ID = #{cliId}
+			ORDER BY WRITE_DATE DESC
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectCheckReviewAuth" resultType="String">
+	SELECT
+		  MAX(PP.PRO_NO) PRO_NO
+	FROM
+		PROJECT_MEM MM LEFT OUTER JOIN TBL_PRO PP ON (MM.PRO_NO = PP.PRO_NO)
+	WHERE
+		PP.COMPLETE_DATE IS NOT NULL
+	AND MM.OUTED_NY != 'Y'
+	AND PP.CLI_ID = #{cliId}
+	AND MM.DEV_ID = #{memId}
+</select>
+
+<select id="selectCheckReview" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		  REV_NO
+		, MEM_WRITE
+	FROM
+		REVIEW
+	WHERE
+		MEM_WRITE = #{memId}
+	AND CLI_ID = #{cliId}
+</select>
+
+<insert id="insertReview">
+<selectKey keyProperty="revNo" resultType="String" order="BEFORE">
+	SELECT GBOARD_SEQ.NEXTVAL AS BO_NUM
+	FROM DUAL
+</selectKey>
+	INSERT
+		INTO
+		REVIEW
+	(
+			  REV_NO
+			, MEM_WRITE
+			, CLI_ID
+			, WRITE_DATE
+			, REVIEW_CONTENT
+			, REVIEW_SCORE
+			, DELETED_NY
+			, DELETE_DATE
+		)
+	VALUES(
+		  #{revNo}
+		, #{memId}
+		, #{cliId}
+		, SYSDATE
+		, #{reviewContent}
+		, #{reviewScore}
+		, 'N'
+		, NULL
+	)
+</insert>
+
+<update id="updateReview">
+	UPDATE
+		REVIEW
+	SET
+		  WRITE_DATE = SYSDATE
+		, REVIEW_CONTENT = #{reviewContent}
+		, REVIEW_SCORE = #{reviewScore}
+	WHERE
+		REV_NO = #{revNo}
+</update>
+
+<delete id="deleteReview">
+	DELETE REVIEW
+	WHERE REV_NO = #{revNo}
+</delete>
+
+<select id="selectRecComponyList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="string">
+SELECT DISTINCT *
+	FROM(
+	SELECT 
+		(SELECT CLIENT_NAME FROM CLIENT WHERE CLI_ID = B.MEM_ID) CLIENT_NAME
+	FROM PRO_BOARD A, GEN_BOARD B
+	
+	WHERE A.BO_NUM = B.BO_NUM(+)
+	  AND INSTR(A.PROJECT_TECH, (SELECT DEV_TECH FROM DEV WHERE DEV_ID = #{memId})) > 0 
+	ORDER BY B.WRITE_DATE DESC
+	)
+WHERE ROWNUM BETWEEN 1 AND 3
+</select>
+
+</mapper>

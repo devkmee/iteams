@@ -1,0 +1,94 @@
+@charset "UTF-8";
+
+.mypage-title-wrap {
+	height: 120px;
+    background-color: #eff5ff;
+    width: 100%;
+    vertical-align: middle;
+}
+
+.mypage-title-wrap > h4 {
+	font-family: 'NanumSquareRound'; 
+	padding: 10px;
+	width: 1200px;
+	margin: 0 auto;
+	
+}
+.sub-mypage-txt {
+	width: 1200px;
+	margin: 0 auto;
+	font-family: 'NanumSquareRound';
+	font-size: 24px;
+}
+
+.sub-mypage-wrap {
+	width: 100%;
+	background-color: #eaf0f9;
+}
+
+.sub-mypage-txt {
+	color: #222;
+	margin-top: 20px;
+	display: block;
+}
+
+.sub-txt-lighter {
+	color: #222;
+}
+
+.tab-wrap {
+/* 	width: 1300px; */
+/* 	margin: 0 auto; */
+/* 	padding: 20px 30px 30px 30px; */
+}
+
+.mypage-info-wrap {
+	padding: 10px;
+}
+
+.employment-wrap {
+	display: flex;
+	justify-content: space-between;
+}
+
+.project-wrap-txt {
+	font-family: 'NanumSquareRound'; 
+	font-size: 16px;
+	padding: 10px;
+}
+
+.employment-list-box {
+	background-color: #f5f5f5;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #838383 #838383 #fff;
+}
+.nav-tabs {
+    border-bottom: 1px solid #838383;
+}    
+
+.nav-tabs .nav-link:focus, .nav-tabs .nav-link:hover {
+    border-color: #cbcbcb #cbcbcb #fff;
+    color: #606060;
+}
+   
+a {
+    color: #606060;
+    text-decoration: none;
+    background-color: transparent;
+}   
+
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #007ad8;
+    background-color: #fff;
+    border-color: #838383 #838383 #fff;
+}
+
+.badge-secondary2 {
+    color: #fff;
+    background-color: #0062cc;
+}

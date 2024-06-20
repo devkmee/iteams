@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:websocket="http://www.springframework.org/schema/websocket"
+	xsi:schemaLocation="http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<context:component-scan base-package="kr.or.ddit" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+		<context:include-filter type="annotation" expression="kr.or.ddit.annotations.ViewPreparer"/>
+		<context:include-filter type="annotation" expression="kr.or.ddit.annotations.Authenticated"/>
+	</context:component-scan>
+	
+<!-- 	<beans:bean id="authenticationArgumentResolver" class="kr.or.ddit.iteams.outs.login.AuthenticationArgumentResolver" /> -->
+	
+<!-- 	<beans:bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"> -->
+<!-- 		<beans:property name="customArgumentResolvers"> -->
+<!-- 			<beans:list> -->
+<!-- 				<beans:ref bean="authenticationArgumentResolver"/> -->
+<!-- 			</beans:list> -->
+<!-- 		</beans:property> -->
+<!-- 	</beans:bean> -->
+	
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"
+		p:maxInMemorySize="#{10*1024}"
+		p:maxUploadSize="#{50*1024*1024}"
+		p:maxUploadSizePerFile="#{3*1024*1024}"
+		p:defaultEncoding="UTF-8"
+	/>
+	
+	<annotation-driven validator="validator">
+		<argument-resolvers>
+			<beans:bean class="kr.or.ddit.iteams.outs.login.AuthenticationArgumentResolver" />
+			<beans:bean class="org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver" />
+		</argument-resolvers>
+	</annotation-driven>
+	
+	
+
+	
+<!-- 	<beans:bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource"  -->
+<!-- 		p:basenames="kr.or.ddit.msgs.errorMessage,kr.or.ddit.msgs.message" -->
+<!-- 	/> -->
+	
+	<beans:bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" 
+		p:validationMessageSource-ref="messageSource"
+	/>
+	
+	<beans:bean id="IRVR" class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+		p:prefix="/WEB-INF/views/"
+		p:suffix=".jsp"
+	/>
+	
+	<beans:bean id="webhardDownloadView" class="kr.or.ddit.iteams.pms.webhard.controller.WebhardDownloadView" />
+	
+	<beans:bean id="imageRenderingView" class="kr.or.ddit.iteams.common.view.ImageRenderingView"></beans:bean>
+	
+	<beans:bean id="downloadView" class="kr.or.ddit.iteams.common.view.DownloadView" />
+	
+	<beans:bean id="excelDownloadView" class="kr.or.ddit.iteams.pms.common.ExcelDownloadView"></beans:bean>
+	
+<!-- 	<beans:bean id="documentsPDFDownloadView" class="kr.or.ddit.iteams.pms.documents.view.DocumentsPDFDownloadView"></beans:bean> -->
+	
+	<beans:bean class="org.springframework.web.servlet.view.BeanNameViewResolver" 
+		p:order="1"
+	/>
+	
+	<beans:bean class="org.springframework.web.servlet.view.tiles3.TilesConfigurer" 
+		p:definitions="/WEB-INF/tiles/*-definitions.xml"
+		p:preparerFactoryClass="org.springframework.web.servlet.view.tiles3.SpringBeanPreparerFactory"
+	/>
+	
+	<beans:bean class="org.springframework.web.servlet.view.tiles3.TilesViewResolver" 
+		p:order="2"
+	/>
+
+	<resources location="/resources/" mapping="/resources/**" cache-period="0" />
+	
+	
+<!-- 	<beans:bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver"  -->
+<!-- 		p:cookieName="languageCookie" -->
+<!-- 		p:cookieMaxAge="#{60*60*24*7}" -->
+<!-- 		p:cookiePath="/" -->
+<!-- 	/> -->
+
+	<interceptors>
+		<beans:bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor" 
+			p:paramName="language"
+		/>
+		
+		<interceptor>
+			<mapping path="/pms/**"/>
+			<exclude-mapping path="/pms/project/projectInsert.do"/>
+			<exclude-mapping path="/pms/websocket/**"/>
+			<beans:bean class="kr.or.ddit.iteams.pms.common.AuthMemberChangeInterceptor" />
+		</interceptor>
+		
+		<interceptor>
+			<mapping path="/**"/>
+			<beans:bean id="webContentInterceptor" class="org.springframework.web.servlet.mvc.WebContentInterceptor" 
+				p:cacheSeconds="0"
+				p:useExpiresHeader="true"
+				p:useCacheControlHeader="true"
+				p:useCacheControlNoStore="true"
+			/>
+		</interceptor>
+		
+<!-- 		<interceptor> -->
+<!-- 			<mapping path="/**/*List.do"/> -->
+<!-- 			<beans:bean class="kr.or.ddit.iteams.common.SearchVORemoveInterceptor"></beans:bean> -->
+<!-- 		</interceptor> -->
+	</interceptors>
+</beans:beans>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

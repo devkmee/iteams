@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.login.dao.EmailCheckDAO">
+
+<select id="check" parameterType="string" resultType="int">
+SELECT COUNT(*) 
+  FROM MEMBER
+ WHERE MEM_MAIL = #{email} 
+</select>
+
+<select id="getId" parameterType="string" resultType="string">
+SELECT MEM_ID
+  FROM MEMBER
+ WHERE MEM_MAIL = #{email} 
+</select>
+
+<select id="getPass" parameterType="string" resultType="string">
+SELECT MEM_ID
+  FROM MEMBER
+ WHERE MEM_MAIL = #{email} 
+</select>
+
+<select id="emailCheck" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+SELECT COUNT(*)
+FROM MEMBER
+WHERE MEM_ID = #{memId}
+  AND MEM_MAIL = #{memMail}
+</select>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.goal.dao.GoalDAO">
+<select id="selectGoalList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	 SELECT A.*, ROWNUM RNUM
+              FROM (SELECT GOAL_ID, PRO_NO, GOAL_WRITER, GOAL_NAME, TO_CHAR(WRITE_DATE,'YYYY-MM-DD') WRITE_DATE,MODIFY_MEMBER,MODIFY_DATE, COMPLETED_NY,TO_CHAR(COMPLETE_DATE,'YYYY-MM-DD') COMPLETE_DATE, DELETED_NY,DELETE_DATE,DELETE_MEMBER,GOAL_PARENT
+                    FROM GOAL
+                    WHERE PRO_NO = #{proNo}
+                    ORDER BY WRITE_DATE DESC)A
+</select>
+<insert id="insertGoal" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+<selectKey resultType="String" keyProperty="goalId" order="BEFORE">
+			SELECT GOAL_SEQ.NEXTVAL
+			FROM DUAL
+		</selectKey>
+	INSERT INTO goal (
+    goal_id
+   ,pro_no
+   ,goal_writer
+   ,goal_name
+   ,complete_date
+   ,write_date
+   ,goal_parent
+ 
+) VALUES (
+    #{goalId}
+   ,#{proNo}
+   ,#{goalWriter}
+   ,#{goalName}
+   ,#{completeDate}
+   ,SYSDATE
+   
+   ,#{goalParent}
+)
+</insert>
+<!-- <delete id="deleteGoal"> -->
+<!--  DELETE FROM GOAL -->
+<!--  WHERE PRO_NO = #{proNo} -->
+
+<!-- </delete> -->
+<!-- <update id="updateGoal"> -->
+
+
+<!-- </update> -->
+
+
+<!-- <update id="deleteGoal"> -->
+<!-- 	UPDATE GOAL -->
+<!-- 	   SET -->
+<!-- 			DELETED_NY    =     'Y' -->
+<!-- 			,DELETE_DATE    =     #{SYSDATE,jdbcType=DATE} -->
+<!-- 			,DELETE_MEMBER    =     #{memId,jdbcType=VARCHAR} -->
+<!-- 	WHERE GOAL_ID = #{goalId} -->
+<!-- 	  AND PRO_NO = #{proNo} -->
+<!-- </update> -->
+
+</mapper>

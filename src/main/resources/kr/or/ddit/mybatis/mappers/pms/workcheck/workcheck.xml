@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.workcheck.dao.WorkCheckDAO">
+	
+	<select id="checkWorkIn" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+		 SELECT COUNT(*)
+		 FROM WORKCHECK
+		 WHERE DEV_ID = #{memId}
+		 AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+	</select>
+	
+	<insert id="insertForWorkIn" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		
+<!-- 		<selectKey keyProperty="inDate" keyColumn="IN_DATE" order="AFTER" resultType="string"> -->
+<!-- 			SELECT TO_CHAR(IN_DATE, 'YYYY-MM-DD HH24:MI') IN_DATE -->
+<!-- 			FROM WORKCHECK -->
+<!-- 			WHERE DEV_ID = #{memId} -->
+<!-- 			  AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD') -->
+<!-- 		</selectKey> -->
+		
+		INSERT
+		INTO
+		WORKCHECK
+		(DEV_ID
+		, SOLAR_DATE
+		, PRO_NO
+		, IN_DATE
+		, OUT_DATE
+		, CHECK_NUM
+		)
+		VALUES(
+		#{memId,jdbcType=VARCHAR}
+		, TO_CHAR(SYSDATE, 'YYYYMMDD')
+		, #{proNo}
+		, SYSDATE
+		, NULL
+		, WORKCHECK_SEQ.NEXTVAL
+		)
+	</insert>
+	
+	<update id="updateForWorkOut" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE
+		WORKCHECK
+		SET
+			OUT_DATE = SYSDATE
+		WHERE
+			SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		AND	IN_DATE IS NOT NULL
+		AND DEV_ID = #{memId,jdbcType=VARCHAR}
+		
+		<selectKey keyProperty="outDate" keyColumn="OUT_DATE" resultType="string" order="AFTER">
+			SELECT TO_CHAR(OUT_DATE, 'YYYY-MM-DD HH24:MI') OUT_DATE
+			FROM WORKCHECK
+			WHERE DEV_ID = #{memId}
+			  AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		</selectKey>	
+	</update>
+	
+	<select id="selectForWorkIn" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT DISTINCT 
+			   TO_CHAR(OUT_DATE, 'YYYY-MM-DD HH24:MI') OUT_DATE
+		FROM WORKCHECK
+		WHERE DEV_ID = #{memId}
+		  AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+	</select>
+	
+	<select id="selectForWorkOut" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT TO_CHAR(IN_DATE, 'YYYY-MM-DD HH24:MI') IN_DATE
+		FROM WORKCHECK
+		WHERE DEV_ID = #{memId}
+		  AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')	
+	</select>
+	
+	<select id="selectWorkcheckList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+		DEV_ID
+		, SOLAR_DATE
+		, PRO_NO
+		, TO_CHAR(IN_DATE,'YYYY-MM-DD HH24:MI') START_DATE
+		, TO_CHAR(OUT_DATE,'YYYY-MM-DD HH24:MI') END_DATE
+		, CHECK_NUM
+	FROM
+		(SELECT * FROM WORKCHECK WHERE PRO_NO = #{proNo} AND DEV_ID = #{memId})
+	WHERE IN_DATE BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD') AND TO_DATE(#{endDate},'YYYY-MM-DD')
+	  OR OUT_DATE BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD') AND TO_DATE(#{endDate},'YYYY-MM-DD')		
+	</select>
+	
+	<select id="selectTodayDayoffList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<![CDATA[
+			SELECT 
+			DISTINCT 
+		    A.DEV_ID
+		  , A.PRO_NO
+		  , A.AUTHORITY
+		  , A.OUTED_NY
+		FROM (SELECT
+				B.DEV_ID
+				, B.PRO_NO
+				, B.AUTHORITY
+				, B.OUTED_NY
+			  FROM
+				PROJECT_MEM B, WORKCHECK C
+			  WHERE
+			    B.AUTHORITY != 'PM'
+			    AND B.OUTED_NY = 'N'
+			    ) A, WORKCHECK C
+		WHERE
+		(SELECT DISTINCT TO_NUMBER(TO_CHAR(C.OUT_DATE, 'HH24MI')) - TO_NUMBER(TO_CHAR(C.IN_DATE, 'HH24MI'))
+		      		FROM WORKCHECK
+		      		WHERE A.DEV_ID IN(C.DEV_ID)
+		      		AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')) < 800
+		OR (SELECT DISTINCT TO_NUMBER(TO_CHAR(C.OUT_DATE, 'HH24MI')) - TO_NUMBER(TO_CHAR(C.IN_DATE, 'HH24MI'))
+		      		FROM WORKCHECK
+		      		WHERE A.DEV_ID IN(C.DEV_ID)
+      				AND SOLAR_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')) IS NULL ]]>	   
+	</select>
+	
+	<insert id="insertDayoffList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">	
+		
+		<selectKey keyProperty="dayoffNum" keyColumn="DAYOFF_NUM" resultType="string" order="BEFORE">
+			SELECT TO_CHAR(MAX(TO_NUMBER(DAYOFF_NUM)) + 1) DAYOFF_NUM
+			FROM DAYOFF
+		</selectKey>
+		
+		<if test="dataList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="dataList" item="dayoff" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO DAYOFF
+			    (
+			    DAYOFF_NUM
+			    ,DEV_ID
+			    ,SOLAR_DATE
+			    ,PRO_NO
+				)
+			VALUES
+			(
+				TO_NUMBER(#{dayoffNum})+#{idx}
+				,#{dayoff.devId}
+				,TO_CHAR(SYSDATE,'YYYYMMDD')
+				,#{dayoff.proNo}
+			)
+		</foreach>
+		
+		<if test="dataList.size gt 0">
+			SELECT * FROM DUAL
+		</if>			
+	</insert>
+	
+	<sql id="searchFrag">
+		<trim prefix=" WHERE ">
+			PRO_NO = #{proNo}
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devId)">
+				AND DEV_ID = #{devId}
+			</if>
+		</trim>
+	</sql>
+	
+	<select id="selectDayoffTotalRecords" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+		SELECT COUNT(*)
+		FROM DAYOFF
+		<include refid="searchFrag"></include> 
+	</select>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="dayOffResult" autoMapping="true">
+		<id property="solarDate" column="SOLAR_DATE"/>
+		<collection property="dayOffList" ofType="kr.or.ddit.iteams.common.vo.PMSTotalVO" >
+			<id property="dayoffNum" column="DAYOFF_NUM"/>
+			<result property="devId" column="DEV_ID"/>
+			<result property="proNo" column="PRO_NO"/>
+			<result property="devName" column="DEV_NAME"/>
+			<result property="authority" column="AUTHORITY"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectTotalDayoffList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="dayOffResult">
+		WITH A AS (
+		SELECT DEV_ID
+			   ,PRO_NO
+			   ,TO_CHAR(TO_DATE(SOLAR_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD') SOLAR_DATE
+			   <if test="@org.apache.commons.lang3.StringUtils@isBlank(devId)">
+			   	   ,(SELECT DEV_NAME FROM DEV WHERE DEV_ID = T.DEV_ID) DEV_NAME
+	   		       ,(SELECT AUTHORITY FROM PROJECT_MEM WHERE DEV_ID = T.DEV_ID AND PRO_NO = #{proNo}) AUTHORITY
+			   </if>
+			   <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devId)">
+			   	,(SELECT DEV_NAME FROM DEV WHERE DEV_ID = #{devId}) DEV_NAME
+	   		   	,(SELECT AUTHORITY FROM PROJECT_MEM WHERE DEV_ID = #{devId} AND PRO_NO = #{proNo}) AUTHORITY
+			   </if>
+		FROM (SELECT 
+				A.DEV_ID
+				, PRO_NO
+				, HOLIDAY
+				, A.SOLAR_DATE
+			    FROM DAYOFF A, CALENDAR B 
+			    WHERE A.SOLAR_DATE = B.SOLAR_DATE(+)
+			      AND PRO_NO = #{proNo}
+			      <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devId)">
+				      AND DEV_ID = #{devId}			      
+			      </if>
+			      ) T
+		WHERE PRO_NO = #{proNo}
+		  AND HOLIDAY IS NULL
+		  OR HOLIDAY = '0'
+		  ORDER BY SOLAR_DATE DESC
+		 ) , B AS (
+		 	SELECT A.*
+		 	      , ROWNUM RNUM
+		 	FROM A
+		 ) 
+		 SELECT *
+		 FROM B
+		 WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="MonthDayoff" autoMapping="true">
+		<id property="solarDate" column="SOLAR_DATE"/>
+		<collection javaType="List" property="monthDayoffList" ofType="kr.or.ddit.iteams.common.vo.MasterVO">
+			<id property="devId" column="DEV_ID"/>
+			<result property="dayoffCount" column="DAYOFF_COUNT"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectMonthDayoffList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="MonthDayoff">
+		SELECT TO_CHAR(TO_DATE(SOLAR_DATE,'YYYY-MM-DD'),'YYYY-MM') SOLAR_DATE
+			   ,COUNT(*) DAYOFF_COUNT
+		       ,DEV_ID       
+		FROM DAYOFF
+		WHERE PRO_NO = #{proNo}
+		GROUP BY ROLLUP(TO_CHAR(TO_DATE(SOLAR_DATE,'YYYY-MM-DD'),'YYYY-MM'),DEV_ID)
+	</select>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="MonthLateList" autoMapping="true">
+		<id property="solarDate" column="SOLAR_DATE"/>
+		<collection property="monthLateList" ofType="kr.or.ddit.iteams.common.vo.MasterVO" javaType="List">
+			<id property="devId" column="DEV_ID"/>
+			<result property="lateCount" column="LATE_COUNT"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectMonthLateList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="MonthLateList">
+		SELECT TO_CHAR(TO_DATE(SOLAR_DATE,'YYYY-MM-DD'),'YYYY-MM') SOLAR_DATE
+			   ,COUNT(*) LATE_COUNT
+		       ,DEV_ID 
+		FROM WORKCHECK
+		WHERE PRO_NO = #{proNo}
+		  AND TO_NUMBER(TO_CHAR(IN_DATE, 'HH24MI')) > 900
+		GROUP BY ROLLUP(TO_CHAR(TO_DATE(SOLAR_DATE,'YYYY-MM-DD'),'YYYY-MM'),DEV_ID)		
+	</select>
+	
+	<resultMap type="map" id="workpieMap">
+		<id property="WORK_LOW" column="WORK_LOW" javaType="int"/>
+		<id property="WORK_NORMAL" column="WORK_NORMAL" javaType="int"/>
+		<id property="WORK_HIGH" column="WORK_HIGH" javaType="int"/>
+		<id property="WORK_EMER" column="WORK_EMER" javaType="int"/>
+		<id property="WORK_NOW" column="WORK_NOW" javaType="int"/>
+	</resultMap>
+	
+	<select id="selectWorkPie" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="workpieMap">
+		SELECT
+			(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_PRIORITY = '1') WORK_LOW
+			,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_PRIORITY = '2') WORK_NORMAL
+			,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_PRIORITY = '3') WORK_HIGH
+			,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_PRIORITY = '4') WORK_EMER
+			,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_PRIORITY = '5') WORK_NOW
+		FROM DUAL		
+	</select>
+	
+</mapper>

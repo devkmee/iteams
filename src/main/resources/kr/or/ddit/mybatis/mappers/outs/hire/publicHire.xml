@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.hire.dao.PublicHireDAO">
+
+<sql id="profileSearch">
+		<trim prefix=" WHERE " prefixOverrides="AND">
+		 	 DD.PUBLIC_NY = 'Y'
+		 	 AND DD.MEM_ID NOT IN (SELECT DEV_ID FROM PROJECT_MEM WHERE OUTED_NY = 'N')
+<!-- 			<choose> -->
+<!-- 				<when test="@org.apache.commons.lang3.StringUtils@isNotBlank(devTech) and @org.apache.commons.lang3.StringUtils@isNotBlank(devJob)"> -->
+<!-- 					INSTR(UPPER(DEV_JOB), UPPER(#{devJob})) > 0 -->
+<!-- 					AND -->
+<!-- 					INSTR(UPPER(DEV_TECH), UPPER(#{devTech})) > 0 -->
+<!-- 				</when> -->
+<!-- 				<when test="@org.apache.commons.lang3.StringUtils@isNotBlank(devTech)"> -->
+<!-- 					INSTR(UPPER(DEV_TECH), UPPER(#{devTech})) > 0 -->
+<!-- 				</when> -->
+<!-- 				<when test="@org.apache.commons.lang3.StringUtils@isNotBlank(devJob)"> -->
+<!-- 					INSTR(UPPER(DEV_JOB), UPPER(#{devJob})) > 0 -->
+<!-- 				</when> -->
+<!-- 			</choose> -->
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devTech)">
+				AND INSTR(UPPER(DEV_TECH), UPPER(#{devTech})) > 0
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devJob)">
+				AND INSTR(UPPER(DEV_JOB), UPPER(#{devJob})) > 0
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devId)">
+				AND INSTR(UPPER(DEV_ID), UPPER(#{devId})) > 0
+			</if>
+		</trim>
+</sql>
+
+<select id="selectProfileTotalRecord" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		LOGINVIEW DD
+	<include refid="profileSearch" />
+</select>
+
+<select id="selectProfileList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT
+				      DD.DEV_ID
+                    , DD.DEV_NAME
+                    , DD.DEV_JOB
+                    , DD.DEV_EDU
+                    , DD.DEV_MAJOR
+                    , DD.DEV_CAREER
+                    , DD.DEV_IMG
+                    , DD.DEV_TECH
+				FROM
+				   LOGINVIEW DD 
+				 <include refid="profileSearch" />
+				ORDER BY
+				 	DD.JOIN_DATE DESC
+			) A
+		) B
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="profileMap" autoMapping="true">
+	<id property="devId" column="DEV_ID" />
+	<collection property="profileProjectList" javaType="List" ofType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<id property="proNo" column="PRO_NO"/>
+		<result property="projectName" column="PROJECT_NAME"/>
+		<result property="createDate" column="CREATE_DATE"/>
+		<result property="completeDate" column="COMPLETE_DATE"/>
+	</collection>
+</resultMap>
+
+<select id="selectProfile" resultMap="profileMap" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT *
+	FROM(
+	SELECT
+	      DD.DEV_ID
+        , DD.DEV_NAME
+        , DD.DEV_BIR
+        , DD.DEV_JOB
+        , DD.DEV_TECH
+        , DD.DEV_EDU
+        , DD.DEV_CAREER
+        , TO_CHAR(DD.DEV_PORT) DEV_PORT
+        , DD.DEV_IMG
+        , DD.PUBLIC_NY
+        , DD.DEV_MAJOR
+        , MM.MEM_TEL
+        , MM.MEM_MAIL
+        , TP.PROJECT_NAME
+        , TP.PRO_NO
+        , TO_CHAR(TP.CREATE_DATE, 'YYYY-MM-DD') CREATE_DATE
+        , TO_CHAR(TP.COMPLETE_DATE, 'YYYY-MM-DD') COMPLETE_DATE
+	FROM
+	    DEV DD LEFT OUTER JOIN MEMBER MM ON (DD.DEV_ID = MM.MEM_ID)
+	    LEFT OUTER JOIN PROJECT_MEM PM ON (MM.MEM_ID = PM.DEV_ID)
+	    LEFT OUTER JOIN TBL_PRO TP ON(PM.PRO_NO = TP.PRO_NO)
+	WHERE
+	    DD.PUBLIC_NY = 'Y'
+	AND DD.DEV_ID = #{devId}
+	
+	UNION
+	
+		SELECT
+	      DD.DEV_ID
+        , DD.DEV_NAME
+        , DD.DEV_BIR
+        , DD.DEV_JOB
+        , DD.DEV_TECH
+        , DD.DEV_EDU
+        , DD.DEV_CAREER
+        , TO_CHAR(DD.DEV_PORT) DEV_PORT
+        , DD.DEV_IMG
+        , DD.PUBLIC_NY
+        , DD.DEV_MAJOR
+        , MM.MEM_TEL
+        , MM.MEM_MAIL
+        , TP.PROJECT_NAME
+        , TP.PRO_NO
+        , TO_CHAR(TP.CREATE_DATE, 'YYYY-MM-DD') CREATE_DATE
+        , TO_CHAR(TP.COMPLETE_DATE, 'YYYY-MM-DD') COMPLETE_DATE
+	FROM
+	    DEV DD LEFT OUTER JOIN MEMBER MM ON (DD.DEV_ID = MM.MEM_ID)
+	    LEFT OUTER JOIN PROJECT_MEM PM ON (MM.MEM_ID = PM.DEV_ID)
+	    LEFT OUTER JOIN TBL_PRO TP ON(PM.PRO_NO = TP.PRO_NO)
+	WHERE
+	    DD.PUBLIC_NY = 'Y'
+	AND DD.DEV_ID = #{devId}
+	AND TP.PROJECT_STATE = 'END'
+	)
+	ORDER BY COMPLETE_DATE ASC
+</select>
+
+<select id="selectProjectListForInvite" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+SELECT
+	  A.PRO_NO
+	, A.PROJECT_NAME
+FROM
+	TBL_PRO A
+WHERE
+	A.CLI_ID = #{memId}
+	AND A.PROJECT_STATE = 'ING'
+	AND A.DELETED_NY = 'N'
+	AND A.PRO_NO NOT IN (SELECT PRO_NO FROM INVITE WHERE DEV_ID = #{devId})
+</select>
+
+<insert id="insertInviteDev" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+<selectKey keyProperty="inviteNo" resultType="String" order="BEFORE">
+	SELECT INVITE_SEQ.NEXTVAL AS INVITE_NO
+	FROM DUAL
+</selectKey>
+	INSERT
+		INTO
+		INVITE(
+			  INVITE_NO
+			, PRO_NO
+			, DEV_ID
+			, INVITE_DATE
+			, INVITE_STATE
+			, INVITE_AUTH
+			, INVITE_PRICE
+		)
+	VALUES(
+		  #{inviteNo}
+		, #{proNo}
+		, #{devId}
+		, SYSDATE
+		, 0
+		, #{authority}
+		, #{invitePrice,jdbcType=NUMERIC}
+	)
+</insert>
+
+<select id="selectCheckDev" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="String">
+	SELECT DD.DEV_ID 
+	FROM PROJECT_MEM MM INNER JOIN DEV DD ON(DD.DEV_ID = MM.DEV_ID)
+	                    INNER JOIN TBL_PRO PP ON(MM.PRO_NO = PP.PRO_NO)
+	WHERE DD.DEV_ID = #{devId} 
+	AND MM.OUTED_NY = 'N'
+	AND PROJECT_STATE = 'ING'
+</select>
+
+<select id="selectCheckPro" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="String">
+	SELECT PRO_NO
+	FROM TBL_PRO PP
+	WHERE PP.PRO_NO = #{proNo}
+	AND PP.PROJECT_STATE = 'ING'
+</select>
+
+<select id="selectInviteTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM 
+		INVITE
+	WHERE
+		DEV_ID = #{memId}
+</select>
+
+<select id="selectInviteListForDev" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  II.INVITE_NO
+				, II.PRO_NO
+				, TO_CHAR(II.INVITE_DATE, 'YY.MM.DD') AS INVITE_DATE
+				, II.INVITE_STATE
+				, II.INVITE_AUTH
+				, PP.PROJECT_NAME
+				, CC.CLIENT_NAME 
+				, II.INVITE_PRICE
+			FROM
+				TBL_PRO PP LEFT OUTER JOIN INVITE II ON (PP.PRO_NO = II.PRO_NO)
+						   LEFT OUTER JOIN CLIENT CC ON (PP.CLI_ID = CC.CLI_ID)
+			WHERE
+				II.DEV_ID = #{memId}
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectInviteListForClient" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT A.*, ROWNUM RNUM
+	FROM (
+		SELECT
+			  II.INVITE_NO
+			, II.PRO_NO
+			, TO_CHAR(II.INVITE_DATE, 'YY.MM.DD') AS INVITE_DATE
+			, II.INVITE_STATE
+			, II.INVITE_AUTH
+			, PP.PROJECT_NAME
+			, DD.DEV_NAME
+			, II.INVITE_PRICE
+		FROM
+			INVITE II INNER JOIN TBL_PRO PP  ON (II.PRO_NO = PP.PRO_NO)
+					  LEFT OUTER JOIN DEV DD ON (II.DEV_ID = DD.DEV_ID)
+		WHERE
+			PP.CLI_ID = #{memId}
+		AND PP.PROJECT_STATE = 'ING'
+		ORDER BY II.INVITE_DATE DESC
+	) A
+</select>
+
+<select id="selectInvite" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		  INVITE_NO
+	FROM
+		INVITE
+	WHERE
+		INVITE_NO = #{inviteNo}
+</select>
+
+<update id="updateAcceptInvitation" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		INVITE
+	SET
+		INVITE_STATE = '1'
+	WHERE
+		INVITE_NO = #{inviteNo}
+</update>
+<insert id="insertToProMember" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+<selectKey keyProperty="promemNum" resultType="String" order="BEFORE">
+	SELECT PRO_MEMBER_SEQ.NEXTVAL AS PROMEM_NUM
+	FROM DUAL
+</selectKey>
+	INSERT
+		INTO
+		PROJECT_MEM
+		(
+		  PROMEM_NUM
+		, PRO_NO
+		, AUTHORITY
+		, JOIN_DATE
+		, OUT_DATE
+		, OUTED_NY
+		, DEV_ID
+		)
+	VALUES(
+		  #{promemNum}
+		, #{proNo}
+		, #{inviteAuth}
+		, SYSDATE
+		, NULL
+		, 'N'
+		, #{devId}
+	)
+</insert>
+
+<update id="updateRefuseInvitation" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		INVITE
+	SET
+		INVITE_STATE = '2'
+	WHERE
+		INVITE_NO = #{inviteNo}
+</update>
+
+<select id="selectCheckProfile" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		  DEV_ID
+		, CLIENT_ID
+	FROM
+		SCRAP_DEV
+	WHERE
+		CLIENT_ID = #{cliId}
+	AND DEV_ID = #{devId}
+</select>
+
+<insert id="insertProfileScrab" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	INSERT
+		INTO
+		SCRAP_DEV(
+			  DEV_ID
+			, CLIENT_ID
+			, SCRAP_DATE
+		)
+	VALUES(
+		  #{devId}
+		, #{cliId}
+		, SYSDATE
+	)
+</insert>
+
+<delete id="deleteProfileScrab" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	DELETE
+	FROM
+		SCRAP_DEV
+	WHERE
+		DEV_ID = #{devId}
+		AND CLIENT_ID = #{cliId}
+</delete>
+
+<select id="profileScrabListTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM
+		SCRAP_DEV
+	WHERE CLIENT_ID = #{memId}
+</select>
+
+<select id="selectProfileScrabList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  SS.DEV_ID
+				, SS.CLIENT_ID
+				, SS.SCRAP_DATE
+				, DD.DEV_NAME
+				, DD.DEV_JOB
+				, DD.DEV_TECH
+				, DD.DEV_CAREER
+				, DD.DEV_IMG 
+			FROM
+				SCRAP_DEV SS LEFT OUTER JOIN DEV DD ON (SS.DEV_ID = DD.DEV_ID)
+			WHERE CLIENT_ID = #{memId}
+			ORDER BY SCRAP_DATE DESC
+	
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectScrapDevNy" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+SELECT COUNT(*)
+FROM SCRAP_DEV
+WHERE DEV_ID = #{devId}
+AND CLIENT_ID = #{clientId}
+</select>
+
+<update id="updateReapply" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE PRO_APP
+	SET HIRED_NY = '0'
+	    , APP_DATE = SYSDATE
+	    , MEETING_DATE = NULL
+	    , MEETING_NY = 'N'
+	    , APP_RETURN = NULL
+	WHERE APP_NO = #{appNo}
+</update>
+
+<select id="selectProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT *
+	FROM TBL_PRO
+	WHERE PRO_NO = #{proNo}
+</select>
+</mapper>

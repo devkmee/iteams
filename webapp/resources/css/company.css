@@ -1,0 +1,152 @@
+@charset "UTF-8";
+
+.company-inner-box {
+    width: 100%;
+    height: 200px;
+    background-color: #14366f;
+    color: #fff;
+}
+
+.company-inner-txt {
+    width: 1230px;
+    margin: 0 auto;
+    padding-top: 40px;
+    font-family: 'NanumSquareRound',sans-serif;
+    font-size: 23px;
+}
+
+.company-txt-lighter {
+    font-weight: lighter;
+    font-size: 18px;
+}
+
+.company-wrap {
+	display: flex;
+}
+
+.company-left {
+	width: 60%;
+	border: 1px solid #dcdcdd;
+    border-radius: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    height: 418px;
+}
+
+.company-left img {
+	height: 416px;
+	object-fit:cover;
+}
+
+.company-right {
+	width: 39%;
+    height: 418px;
+    border: 1px solid #dcdcdd;
+    border-radius: 12px;
+    box-sizing: border-box;
+    margin-left: 10px;
+    overflow: hidden;    
+}
+
+.company-ranking-list {
+	height: 100%;
+	width: 100%;
+	background-color: #e7ebf0;
+}
+
+.company-list {
+	background-color: #fff;
+    margin: 0px 50px 0px 50px;
+    height: 302px;
+}
+
+.table-ranking-company {
+    display: inline-block;
+    padding: 40px 35px 0px 40px;
+}
+
+.table-ranking-company > tbody > tr > td {
+	padding: 10px 12px 10px 12px;
+}
+
+.card-header {
+	padding: 0.75rem rem 1.25rem;
+    margin-bottom: 0;
+    color: #fff;
+    background-color: #3a6a8f;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.border-primary {
+	border-color: #899baf!important;
+	font-family: 'NanumSquareRound';
+}
+
+.card-body > h5 {
+	margin-top: 6px;
+	color: #0c2538;
+	font-family: 'NanumSquareRound';
+}
+
+.card-body > p {
+	color: #2c353c;
+	font-family: 'NanumSquareRound';
+	margin-bottom: 8px;
+}
+
+.project-list-box-wrap > div:not(:last-child) {
+	margin-right: 10px;
+} 
+
+.company-table {
+	font-family: 'NanumSquareRound',sans-serif;
+	margin-bottom: 30px;
+}
+
+.company-table > tbody > tr > th {
+	width: 160px;
+	border: 1px solid #dee2e6;
+	background-color: #e9ecef;
+    padding-left: 26px;
+}
+
+.company-table > tbody > tr > td {
+	border: 1px solid #dee2e6;
+} 
+
+.company-search-wrap {
+	display: flex;
+}
+
+.company-search-list2 {
+    border: 1px solid #d0d0d0;
+    color: #545b62;
+    font-size: 14px;
+    padding: 6px 6px 10px 6px;
+    margin-bottom: 4px;
+    width: 380px;
+    margin-right: 4px;
+    cursor: pointer;
+}
+
+.company-span-title {
+	font-weight: 500;
+    font-size: 18px;
+    color: #212529;
+}
+
+.company-span-txt {
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    line-height: 28px;
+}
+
+.company-list-txt {
+	 font-family: 'NanumSquareRound',sans-serif;
+}

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.free.dao.FreeBoardDAO">
+		
+	<sql id="searchFrag">
+		<trim>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boTitle)">
+				AND INSTR(A.BO_TITLE, #{boTitle}) > 0
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(memId)">
+				AND INSTR(A.MEM_ID, #{memId}) > 0
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boContent)">
+				AND INSTR(A.BO_CONTENT, #{boContent}) > 0
+			</if>
+		</trim>
+	</sql>
+	<select id="selectBoardList"  resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT B.*
+		FROM (	
+			 SELECT A.*, ROWNUM RNUM
+			 FROM
+			 (SELECT A.BO_NUM,A.BO_CODE,A.MEM_ID,A.BO_TITLE,A.BO_CONTENT,TO_CHAR(A.WRITE_DATE,'YYYY-MM-DD') WRITE_DATE,A.MODIFY_MEMBER,A.MODIFY_DATE,A.DELETED_NY,A.DELETE_MEMBER,A.DELETE_DATE,A.BO_HIT,A.BO_REC,A.BO_REP,A.PUBLIC_NY,C.DEV_NAME
+	  		FROM GEN_BOARD A LEFT OUTER JOIN MEMBER B ON(A.MEM_ID = B.MEM_ID)
+	        LEFT OUTER JOIN DEV C ON(A.MEM_ID = C.DEV_ID) 
+	 		WHERE A.BO_CODE ='GF' AND A.DELETED_NY = 'N' AND A.PUBLIC_NY = 'Y'
+	 			<include refid="searchFrag"></include>
+	 		ORDER BY A.WRITE_DATE DESC)A
+	 		)B
+	 	WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	 	ORDER BY B.RNUM
+	</select>
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="boardMap" autoMapping="true">
+		<id property="boNum" column="Num"/>
+		<collection property="attachList" ofType="kr.or.ddit.iteams.common.vo.AttachTotalVO" autoMapping="true">
+			<id property="attNo" column="ATT_NO"/>
+		</collection>
+	</resultMap>
+	
+		<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT COUNT(*)
+		FROM GEN_BOARD A
+		WHERE BO_CODE='GF' AND DELETED_NY = 'N' AND PUBLIC_NY = 'Y'
+			<include refid="searchFrag"></include>
+		
+<!-- 		<include refid="searchFrag" /> -->
+	</select>
+		<update id="incrementCount" parameterType="map">
+		UPDATE GEN_BOARD
+		SET
+		${incType} = ${incType} + 1
+		WHERE BO_NUM = #{boNum}
+	</update>
+	<select id="selectBoard"  parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="boardMap">
+		SELECT
+			A.BO_NUM Num
+			, A.BO_CODE
+			, A.MEM_ID
+			, A.BO_TITLE
+			, A.BO_CONTENT
+			, TO_CHAR(A.WRITE_DATE, 'YYYY-MM-DD HH24:MI') WRITE_DATE
+			, A.BO_HIT
+			, A.BO_REC
+			, A.BO_REP
+			, ATTACH_ORIGIN
+			, ATT_NO
+			, FTP_SAVEDPATH
+			, ATTACH_NAME
+		FROM
+			GEN_BOARD A, LOGINVIEW B, GEN_ATTACH C
+		WHERE
+			A.MEM_ID = B.MEM_ID(+)
+		AND A.BO_NUM = C.BO_NUM(+)
+		AND A.BO_NUM = #{boNum}
+	</select>
+	<insert id="insertBoard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<selectKey keyProperty="boNum" keyColumn="BO_NUM" resultType="string" order="BEFORE">
+			SELECT GBOARD_SEQ.NEXTVAL BO_NUM
+			FROM DUAL
+		</selectKey>
+		INSERT INTO GEN_BOARD (
+		  		BO_NUM,  BO_CODE,   BO_TITLE,MEM_ID,WRITE_DATE,
+			    BO_CONTENT,DELETED_NY,PUBLIC_NY,BO_HIT
+			) VALUES (
+			    #{boNum,jdbcType=NUMERIC}
+			    ,'GF'
+				,#{boTitle,jdbcType=VARCHAR}
+				,#{memId,jdbcType=VARCHAR}
+				,SYSDATE
+				,#{boContent,jdbcType=CLOB}
+				,'N'
+				,'Y'
+				,0
+			)
+	</insert>
+	<update id="updateBoard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE GEN_BOARD 
+		SET BO_TITLE = #{boTitle,jdbcType=VARCHAR}
+		,BO_CONTENT = #{boContent,jdbcType=CLOB} 
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	<update id="deleteBoard" parameterType="string">
+		DELETE GEN_BOARD
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+

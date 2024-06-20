@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.documents.dao.DocumentsDAO">
+	
+	<sql id="searchFrag">
+		<trim prefix=" WHERE" prefixOverrides="AND">
+			A.ATT_NO = B.ATT_NO
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(proNo)">
+				AND PRO_NO = #{proNo}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(docTitle)">
+				AND INSTR(DOC_TITLE, #{docTitle}) > 0
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(editRange)">
+				AND EDIT_RANGE = #{editRange}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(docWriter)">
+				AND DEV_ID = #{docWriter}
+			</if>
+		</trim>
+	</sql>	
+	
+	<insert id="insertDocuments" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		INSERT
+			INTO
+			DOCUMENT
+		(DOC_NUM
+			, PRO_NO
+			, ATT_NO
+			, EDIT_RANGE
+			, DEV_ID
+			, DOC_TITLE
+			, DOC_WRITER)
+		VALUES(DOCUMENT_SEQ.NEXTVAL
+		, #{proNo}
+		, #{attNo}
+		, #{editRange}
+		, #{devId}
+		, #{docTitle}
+		, #{devName})
+	</insert>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="documentMap" autoMapping="true">
+		<id property="docNum" column="DOC_NUM" />
+		<association property="attachVO" autoMapping="true" javaType="kr.or.ddit.iteams.common.vo.AttachTotalVO">
+			<id property="attNo" column="ATT_NO"/>
+		</association>
+	</resultMap>
+	
+	<select id="selectDocuments" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="documentMap">
+		SELECT
+		DOC_NUM
+		, PRO_NO
+		, A.ATT_NO
+		, EDIT_RANGE
+		, DEV_ID
+		, DOC_TITLE
+		, ATTACH_NAME
+		, ATTACH_ORIGIN
+		, ATTACH_SIZE
+		, UPLOAD_DATE
+		, ATT_MODIFY_MEMBER
+		, ATT_MODIFY_DATE
+		, ATT_DELETED_NY
+		, ATT_DELETE_MEMBER
+		, ATT_DELETE_DATE
+		, ATTACH_MIME
+		, FTP_SAVEDPATH
+	FROM
+		DOCUMENT A, PMS_ATT B
+	WHERE A.ATT_NO = B.ATT_NO
+	  AND DOC_NUM = #{docNum}
+	</select>
+	
+	<update id="updateDocuments" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE
+		DOCUMENT
+	SET
+		 ATT_NO = #{attNo}
+		, EDIT_RANGE = #{editRange}
+		, DOC_TITLE = #{docTitle}
+		, MODIFY_DATE = SYSDATE
+	WHERE
+		DOC_NUM = #{docNum}
+	</update>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="ListMap" autoMapping="true">
+		<id property="docNum" column="DOC_NUM"/>
+		<association property="attachVO" autoMapping="true" >
+			<id property="attNo" column="ATT_NO"/>
+		</association>
+	</resultMap>
+	
+	<select id="selectDocumentsList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="ListMap">
+		WITH A AS
+		(
+		SELECT
+			DOC_NUM
+			, PRO_NO
+			, A.ATT_NO
+			, EDIT_RANGE
+			, DEV_ID
+			, DOC_TITLE
+			, WRITE_DATE
+			, MODIFY_DATE
+			, DOC_WRITER DEV_NAME
+			, ATTACH_NAME
+			, ATTACH_ORIGIN
+			, ATTACH_SIZE
+			, TO_CHAR(UPLOAD_DATE, 'YYYY-MM-DD') UPLOAD_DATE
+			, ATT_MODIFY_MEMBER
+			, ATT_MODIFY_DATE
+			, ATT_DELETED_NY
+			, ATT_DELETE_MEMBER
+			, ATT_DELETE_DATE
+			, ATTACH_MIME
+			, FTP_SAVEDPATH
+		FROM
+			DOCUMENT A, PMS_ATT B 
+		<include refid="searchFrag"></include>
+		ORDER BY WRITE_DATE DESC
+		), B AS
+		(
+			SELECT
+				ROWNUM RNUM,
+				A.*
+			FROM A				
+		) SELECT
+				B.*
+		  FROM B
+		  WHERE RNUM BETWEEN #{startRow} AND #{endRow}		
+	</select>
+	
+	<select id="selectDocumentsTotalRecords" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+		SELECT COUNT(*)
+		FROM  DOCUMENT A, PMS_ATT B
+		 <include refid="searchFrag"></include>
+	</select>
+	
+	<delete id="deleteDocuments" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		DELETE DOCUMENT
+		WHERE DOC_NUM = #{docNum}
+	</delete>
+	
+</mapper>

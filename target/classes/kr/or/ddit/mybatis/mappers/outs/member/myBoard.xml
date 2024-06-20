@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.member.dao.MyboardDAO">
+
+<select id="selectTotalRecord" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		GEN_BOARD
+	WHERE
+		MEM_ID = #{memId}
+		AND DELETE_MEMBER IS NULL
+</select>
+
+<select id="selectMyBoardList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT  
+				  BO_NUM
+				 ,BO_TITLE
+				 ,MEM_ID
+				 ,BO_CODE
+				 ,TO_CHAR(WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE
+			FROM
+				GEN_BOARD
+			WHERE 
+				    MEM_ID = #{memId}
+				AND DELETE_MEMBER IS NULL
+			ORDER BY WRITE_DATE DESC
+		) A
+	) B  
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+</mapper>

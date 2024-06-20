@@ -1,0 +1,32 @@
+@charset "UTF-8";
+
+
+.sub-wrap {
+   width: 100%;
+   background-color: #007ad8;
+}
+
+.sub-inner-box {
+   display: flex;
+   justify-content: space-between;
+   width: 1230px;
+   margin: 0 auto;
+   height: 160px;
+   color: #fff;
+}
+
+.sub-inner-txt {
+   width:990px;
+   margin: 0 auto;
+   padding-top: 40px;
+   font-family: 'NanumSquareRound',sans-serif;
+   font-size: 23px;
+}
+
+.sub-inner-txt2 {
+   width:990px;
+   margin: 0 auto;
+   padding-top: 48px;
+   font-family: 'NanumSquareRound',sans-serif;
+   font-size: 23px;
+}

@@ -1,0 +1,49 @@
+@charset "UTF-8";
+
+.interview-box-wrap {
+	display: flex;
+	margin-bottom: 20px;
+}
+
+.interview-box {
+	width: 400px;
+	height: 150px;
+	border: 1px solid #bbbdbf;
+	padding: 10px;
+	border-radius: 6px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.interview-box-wrap > .interview-box:not(:last-child) {
+    margin-right: 20px;
+}
+
+.interview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.interview-img-wrap {
+	width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    overflow: hidden;
+}
+
+.arrow-wrap {
+	float: right;
+	margin-right: 16px;
+}
+
+.interview-txt-wrap {
+	margin-left: 8px;
+	padding-top: 12px;
+	width: calc(100% - 80px);
+}
+
+.interview-card {
+	display: flex;
+}

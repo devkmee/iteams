@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.project.dao.ProjectDAO">
+		
+	<insert id="insertProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		
+		<selectKey keyProperty="proNo" resultType="String"  order="BEFORE">
+			SELECT PROJECT_SEQ.NEXTVAL
+			FROM DUAL
+		</selectKey>
+		INSERT INTO TBL_PRO (
+		    PRO_NO
+		   ,PROJECT_NAME
+		   ,CLI_ID
+		   ,CREATE_DATE
+		   ,PROJECT_STATE
+		   ,DELETED_NY
+		) VALUES (
+		   	#{proNo,jdbcType=VARCHAR}
+			,#{projectName,jdbcType=VARCHAR}
+			,#{cliId,jdbcType=VARCHAR}
+			,SYSDATE
+			,'ING'
+			,'N'
+		)
+	</insert>
+	
+	<insert id="insertApp"  parameterType="kr.or.ddit.iteams.common.vo.CustomProjectMemVO">
+		<selectKey resultType="int" keyProperty="starNum" order="BEFORE">
+			SELECT PRO_MEMBER_SEQ.NEXTVAL
+			FROM DUAL
+		</selectKey>
+		INSERT INTO PROJECT_MEM(
+		   promem_num
+		   ,pro_no
+		   ,authority
+		   ,join_date
+		   ,outed_ny
+		   ,dev_id
+		) VALUES(
+			#{starNum}
+			,#{proNo}
+			,#{authority}
+			,SYSDATE
+			,'N'
+			,#{devId}
+		)
+	</insert>
+
+	<update id="updateProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE TBL_PRO
+		   SET PROJECT_NAME = #{projectName,jdbcType=VARCHAR}
+		   	   ,MODIFY_DATE = SYSDATE
+		 WHERE PRO_NO = #{proNo }
+	</update>
+	<update id="updateApp" parameterType="kr.or.ddit.iteams.common.vo.CustomProjectMemVO">
+		UPDATE PROJECT_MEM
+		   SET AUTHORITY = #{authority,jdbcType=VARCHAR}
+		   	  , OUTED_NY = 'N'
+		 WHERE PRO_NO = #{proNo }
+		   AND DEV_ID = #{devId}
+	</update>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT COUNT(*)
+		FROM TBL_PRO
+	</select>
+	
+	<select id="selectProjectList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+			SELECT D.*, ROWNUM rnum
+			FROM
+				(SELECT     A.pro_no
+						   ,A.project_name
+						   ,A.cli_id
+						   ,TO_CHAR(A.create_date,'YYYY-MM-DD HH24:MI') create_date
+						   ,A.complete_date
+						   ,A.project_state
+						   ,A.deleted_ny
+						   ,A.modify_date
+						   ,A.delete_date
+						   ,C.MANAGER_NAME
+				FROM TBL_PRO A
+					,MEMBER B
+					,CLIENT C
+				WHERE A.CLI_ID = B.MEM_ID(+)
+				  AND A.CLI_ID = C.CLI_ID(+)
+				  AND A.CLI_ID = #{memId}
+				  AND deleted_ny = 'N'
+				  ORDER BY A.PRO_NO ASC) D
+	</select>
+	<select id="selectProjectBoardList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT *
+		  FROM PRO_BOARD A
+               ,GEN_BOARD B
+		 WHERE A.BO_NUM = B.BO_NUM
+		   AND A.COMPLETED_NY = 'Y'
+           AND B.MEM_ID = #{memId}
+	</select>
+	
+	<select id="selectProject" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT A.*,B.*,C.*
+		  FROM PROJECT_MEM A, LOGINVIEW B, TBL_PRO C
+		 WHERE A.DEV_ID = B.MEM_ID
+		   AND  A.PRO_NO = C.PRO_NO(+)
+	   	   AND A.PRO_NO = #{proNo}
+	</select>
+	
+	<update id="deleteProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE TBL_PRO
+		SET
+		  DELETED_NY ='Y'
+		  ,PROJECT_STATE='DELETE'
+		WHERE
+			PRO_NO = #{proNo}	
+	</update>
+	
+	<update id="deleteApp" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE PROJECT_MEM
+		SET
+		  OUTED_NY ='Y'
+		WHERE
+			DEV_ID = #{devId}
+			,PRO_NO = #{proNo}	
+	</update>
+</mapper>

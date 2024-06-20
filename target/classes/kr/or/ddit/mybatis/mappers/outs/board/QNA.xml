@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.qna.dao.QNADAO">
+
+<sql id="searchWhere">
+	<trim prefix=" WHERE " prefixOverrides="AND">
+		GG.BO_CODE = 'GQ'
+		AND GG.PUBLIC_NY = 'Y'
+		AND GG.DELETED_NY = 'N'
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch)">
+			AND QQ.QNA_KEYWORD = #{detailSearch}
+		</if>
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(memId)">
+			AND (MEM_ID = #{memId} OR BO_PARENT IN(SELECT BO_NUM FROM GEN_BOARD WHERE MEM_ID = #{memId} AND BO_CODE = 'GQ'))
+		</if>
+	</trim>
+</sql>
+
+<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM
+		GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON(GG.BO_NUM = QQ.BO_NUM)
+	<include refid="searchWhere"></include>
+</select>
+
+<select id="selectQnAList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	WITH A AS(
+		SELECT
+			  GG.BO_NUM
+			, GG.MEM_ID
+			<![CDATA[
+			, LPAD('        ', (LEVEL-1)* 32, '&nbsp;') || BO_TITLE AS BO_TITLE
+			]]>	
+			, TO_CHAR(GG.WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE
+			, GG.MODIFY_MEMBER
+			, TO_CHAR(GG.MODIFY_DATE, 'YYYY.MM.DD') AS MODIFY_DATE
+			, GG.BO_HIT
+			, QQ.QNA_KEYWORD
+			, QQ.QNA_ADMIN
+			, QQ.BO_PARENT
+		FROM
+			GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON (GG.BO_NUM = QQ.BO_NUM)
+		<include refid="searchWhere"></include>
+		START WITH
+			BO_PARENT IS NULL
+		CONNECT BY
+			PRIOR QQ.BO_NUM = BO_PARENT
+		    ORDER SIBLINGS BY QQ.BO_NUM DESC
+	)
+	, B AS (SELECT ROWNUM RNUM, A.* FROM A )
+	    SELECT *
+		FROM B
+		WHERE 
+			RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectCheckQMem" resultType="String" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT GG.MEM_ID 
+	 FROM GEN_BOARD GG LEFT OUTER JOIN QNA_BOARD QQ ON (GG.BO_NUM = QQ.BO_PARENT)
+	WHERE QQ.BO_NUM = #{boNum}
+</select>
+
+<insert id="insertAnswer" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+<selectKey keyProperty="boNum" resultType="String" order="BEFORE">
+	SELECT GBOARD_SEQ.NEXTVAL AS BO_NUM
+	FROM DUAL
+</selectKey>
+	INSERT ALL
+		INTO
+		GEN_BOARD (
+			  BO_NUM
+			, BO_CODE
+			, MEM_ID
+			, BO_TITLE
+			, BO_CONTENT
+			, WRITE_DATE
+			, MODIFY_MEMBER
+			, MODIFY_DATE
+			, DELETED_NY
+			, DELETE_MEMBER
+			, DELETE_DATE
+			, BO_HIT
+			, BO_REC
+			, BO_REP
+			, PUBLIC_NY
+		)
+	VALUES(
+		  #{boNum}
+		, 'GQ'
+		, #{memId}
+		, '└ 답변: '||(SELECT BO_TITLE FROM GEN_BOARD WHERE BO_NUM = #{boParent})
+		, #{boContent}
+		, SYSDATE
+		, NULL
+		, NULL
+		, 'N'
+		, NULL
+		, NULL
+		, 0
+		, 0
+		, 0
+		, 'Y'
+	)
+		INTO
+			QNA_BOARD (
+			  BO_NUM
+			, BO_PARENT
+			, QNA_KEYWORD
+			, QNA_ADMIN
+		)
+	VALUES(
+		  #{boNum}
+		, #{boParent}
+		, (SELECT QNA_KEYWORD FROM QNA_BOARD WHERE BO_NUM = #{boParent})
+		, #{memId}
+	)
+	SELECT * FROM DUAL
+</insert>
+
+<update id="updateQForAnswer" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+ UPDATE QNA_BOARD
+	    SET
+	        QNA_ADMIN = #{memId}
+	WHERE
+	    bo_num = #{boParent}
+</update>
+
+<select id="selectCheckAnswer" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT BO_NUM 
+	FROM QNA_BOARD
+	WHERE BO_PARENT = #{boNum}
+</select>
+
+<update id="updateAnswer" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE GEN_BOARD
+	SET BO_CONTENT = #{boContent}
+	WHERE BO_NUM = #{boNum}
+</update>
+
+</mapper>

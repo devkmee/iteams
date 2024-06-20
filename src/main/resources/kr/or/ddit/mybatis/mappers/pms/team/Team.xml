@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.team.dao.TeamRetrieveDAO">
+		
+	<!-- 프로젝트중인 모든멤버 -->
+	<select id="memberList" parameterType="String" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+			SELECT *
+			FROM PROJECT_MEM A, LOGINVIEW B
+			WHERE A.DEV_ID = B.MEM_ID(+)
+			AND A.PRO_NO = #{proNo}
+	</select>	
+	<!-- 프로젝트중인 모든멤버  상세보기 -->
+	<select id="memberDetail" parameterType="String" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+			SELECT * 
+			FROM PROJECT_MEM A, LOGINVIEW B
+			WHERE A.DEV_ID = B.MEM_ID(+)
+			AND PROMEM_NUM = #{number}    
+	</select>  
+	  <!-- 프로젝트에 속한 멤버목록 조회 -->
+    <select id="projectMemberList" parameterType="String" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		    SELECT A.PRO_NO 
+		          ,A.AUTHORITY 
+		          ,A.DEV_ID 
+			      ,B.DEV_NAME 
+			      ,B.DEV_JOB 
+			      ,B.DEV_TECH
+			      ,B.MANAGER_NAME
+			      ,B.DEV_IMG 
+			  FROM PROJECT_MEM A, LOGINVIEW B  
+			 WHERE A.DEV_ID = B.MEM_ID(+)
+			   AND PRO_NO = #{proNo}
+	</select> 
+	<!-- 메인화면에서 해당프로젝트정보보기-->
+	 <select id="selectProjectInfo"  parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		    SELECT
+			PROJECT_NAME
+			, CLI_ID
+			, TO_CHAR(CREATE_DATE,'YYYY-MM-DD') CREATE_DATE
+			, TO_CHAR(COMPLETE_DATE,'YYYY-MM-DD') COMPLETE_DATE
+			, PROJECT_STATE		       
+			FROM TBL_PRO
+			WHERE PRO_NO = #{proNo}
+			AND DELETED_NY = 'N'
+	</select>
+	
+	<!-- WORK_STATE별 COUNT 시키기 -->
+	<resultMap type="HashMap" id="proResultMap">
+	  <id column="NEW_PROGRESS" property="NEW_PROGRESS" javaType="int"/>
+	  <id column="NEW_COMPLETED" property="NEW_COMPLETED" javaType="int"/>
+	  <id column="NEW_SUM" property="NEW_SUM" javaType="int"/>
+	  <id column="DEFECT_PROGRESS" property="DEFECT_PROGRESS" javaType="int"/>
+	  <id column="DEFECT_COMPLETED" property="DEFECT_COMPLETED" javaType="int"/>
+	  <id column="DEFECT_SUM" property="DEFECT_SUM" javaType="int"/>
+	  <id column="SUPPORT_PROGRESS" property="SUPPORT_PROGRESS" javaType="int"/>
+	  <id column="SUPPORT_COMPLETED" property="SUPPORT_COMPLETED" javaType="int"/>
+	  <id column="SUPPORT_SUM" property="SUPPORT_SUM" javaType="int"/>
+	  <id column="NOTICE_PROGRESS" property="NOTICE_PROGRESS" javaType="int"/>
+	  <id column="NOTICE_COMPLETED" property="NOTICE_COMPLETED" javaType="int"/>
+	  <id column="NOTICE_SUM" property="NOTICE_SUM" javaType="int"/>
+	  <id column="WORK_STATE" property="WORK_STATE"  javaType="int"/>
+	  <id column="WORK_TYPE" property="WORK_TYPE"  javaType="int"/>
+	</resultMap>
+	<!-- column은 db의 출력하는 컬럼명, property는 key값 -->
+	 <select id="projectInfo" resultMap="proResultMap" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	      SELECT A.*
+   		 		, (A.NEW_PROGRESS + A.NEW_COMPLETED) AS NEW_SUM
+   		 		, (A.DEFECT_PROGRESS + A.DEFECT_COMPLETED) AS DEFECT_SUM
+   		 		, (A.SUPPORT_PROGRESS + A.SUPPORT_COMPLETED) AS SUPPORT_SUM
+    			, (A.NOTICE_PROGRESS + A.NOTICE_COMPLETED) AS NOTICE_SUM
+			FROM (
+				  SELECT (SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '1') AS NEW_PROGRESS
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '2') AS DEFECT_PROGRESS
+         				,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '3') AS SUPPORT_PROGRESS
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '4') AS NOTICE_PROGRESS
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '1') AS NEW_COMPLETED
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '2') AS DEFECT_COMPLETED
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '3') AS SUPPORT_COMPLETED
+    					,(SELECT COUNT(*) FROM TBL_WORK WHERE PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '4') AS NOTICE_COMPLETED
+					FROM DUAL) A
+	</select>
+	
+	<select id="selectDevWorkList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="proResultMap">
+		  SELECT A.*
+		 		, (A.NEW_PROGRESS + A.NEW_COMPLETED) AS NEW_SUM
+		 		, (A.DEFECT_PROGRESS + A.DEFECT_COMPLETED) AS DEFECT_SUM
+		 		, (A.SUPPORT_PROGRESS + A.SUPPORT_COMPLETED) AS SUPPORT_SUM
+				, (A.NOTICE_PROGRESS + A.NOTICE_COMPLETED) AS NOTICE_SUM
+			FROM (SELECT
+			 (SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '1') AS NEW_PROGRESS
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '2') AS DEFECT_PROGRESS
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '3') AS SUPPORT_PROGRESS
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE != '5' AND WORK_TYPE = '4') AS NOTICE_PROGRESS
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '1') AS NEW_COMPLETED
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '2') AS DEFECT_COMPLETED
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '3') AS SUPPORT_COMPLETED
+			,(SELECT COUNT(*) FROM TBL_WORK C WHERE C.WORK_CHARGER = #{memId} AND C.PRO_NO = #{proNo} AND WORK_STATE = '5'  AND WORK_TYPE = '4') AS NOTICE_COMPLETED
+		FROM DUAL) A	
+	</select>
+</mapper>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.common.dao.PMSOthersDAO">
+
+	<select id="selectProjectMember" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+		PROMEM_NUM
+		, PRO_NO
+		, AUTHORITY
+		, A.JOIN_DATE
+		, A.OUT_DATE
+		, A.OUTED_NY
+		, A.DEV_ID
+		, DEV_NAME
+		, MANAGER_NAME
+	FROM
+		PROJECT_MEM A, LOGINVIEW B
+	WHERE A.DEV_ID = B.MEM_ID
+	AND PRO_NO = #{proNo} 
+	</select> 
+	
+	<insert id="insertTimeLine" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		
+		<selectKey keyProperty="timeNum" keyColumn="TIME_NUM" resultType="string" order="BEFORE">
+			SELECT TIMELINE_SEQ.NEXTVAL TIME_NUM
+			FROM DUAL
+		</selectKey>
+		
+		INSERT INTO TIMELINE
+			(TIME_NUM
+			, PRO_NO
+			, MEM_ID
+			, TIMELINE_DATE
+			, TIMELINE_CONTENT
+			, TIMELINE_URL
+			, TIMELINE_NAME
+			, WORK_TYPE
+			, DELETED_NY
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boNum)">
+				, BO_NUM
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(workNum)">
+				, WORK_NUM
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(docNum)">
+				, DOC_NUM
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(planNum)">
+				, PLAN_NUM
+			</if>
+			)
+		VALUES(
+		#{timeNum,jdbcType=VARCHAR}
+		, #{proNo,jdbcType=VARCHAR}
+		, #{memId,jdbcType=VARCHAR}
+		, SYSDATE
+		, #{timelineContent,jdbcType=VARCHAR}
+		, #{timelineUrl,jdbcType=VARCHAR}
+		, #{timelineName,jdbcType=VARCHAR}
+		, #{workType,jdbcType=VARCHAR}
+		, 'N'
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boNum)">
+			, #{boNum,jdbcType=VARCHAR}
+		</if>
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(workNum)">
+			, #{workNum,jdbcType=VARCHAR}
+		</if>
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(docNum)">
+			, #{docNum,jdbcType=VARCHAR}
+		</if>
+		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(planNum)">
+			, #{planNum,jdbcType=VARCHAR}
+		</if>		
+		)
+	</insert>
+	
+	<select id="selectTimeLineTotalRecordCount" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TIMELINE
+		WHERE PRO_NO = #{proNo}
+	</select>
+	
+	<select id="selectTimeLineList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		WITH A AS
+		(
+		SELECT
+			TIME_NUM
+			, PRO_NO
+			, MEM_ID
+			, TO_CHAR(TIMELINE_DATE,'YYYY-MM-DD HH24:MI') TIMELINE_DATE
+			, TIMELINE_CONTENT
+			, TIMELINE_URL
+			, TIMELINE_NAME
+			, DELETED_NY
+		FROM
+			TIMELINE
+		WHERE PRO_NO = #{proNo}
+		ORDER BY TIMELINE_DATE DESC
+		), B AS
+		(
+			SELECT
+				ROWNUM RNUM,
+				A.*
+			FROM A				
+		) SELECT
+				B.*
+		  FROM B
+		  WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<update id="deleteTimeLine" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE TIMELINE
+		SET DELETED_NY = 'Y'
+		WHERE
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boNum)">
+				BO_NUM = #{boNum,jdbcType=VARCHAR}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(workNum)">
+				WORK_NUM = #{workNum,jdbcType=VARCHAR}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(docNum)">
+				DOC_NUM = #{docNum,jdbcType=VARCHAR}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(planNum)">
+				PLAN_NUM = #{planNum,jdbcType=VARCHAR}
+			</if>		
+	</update>
+	
+	<update id="incrementCount" parameterType="Map">
+            UPDATE PMS_BOARD
+            SET ${incType} = ${incType} + 1
+            WHERE BO_NUM = #{boNum}
+	</update>	  
+	
+	
+</mapper>

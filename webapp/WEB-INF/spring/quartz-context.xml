@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+
+	
+	<bean id="dayoffInsertJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean" 
+		p:targetObject-ref="dayoffInsertJob"
+		p:targetMethod="insertList"
+	/>
+	
+	<bean id="memberDeleteJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean" 
+		p:targetObject-ref="memberRealDeleteJob"
+		p:targetMethod="realDelete"
+	/>
+	
+<!-- 	<bean id="memberDeleteTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"  -->
+<!-- 		p:jobDetail-ref="memberDeleteJobDetail" -->
+<!-- 		p:cronExpression="0 0 3 ? * MON" -->
+<!-- 	/> -->
+	
+<!-- 	0 0 3 ? * MON -->
+<!-- 	초 분 시 일 월 요일 -->
+<!-- 	<bean id="dayoffTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"  -->
+<!-- 		p:jobDetail-ref="dayoffInsertJobDetail" -->
+<!-- 		p:cronExpression="30 55 23 ? * MON-FRI" -->
+<!-- 	/> -->
+	
+	<util:list id="triggerList" value-type="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<bean id="memberDeleteTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" 
+			p:jobDetail-ref="memberDeleteJobDetail"
+			p:cronExpression="0 0 3 ? * MON"
+		/>
+		<bean id="dayoffTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" 
+			p:jobDetail-ref="dayoffInsertJobDetail"
+			p:cronExpression="10 30 17 ? * MON-FRI"
+		/>
+	</util:list>
+	
+	
+	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean" 
+		p:triggers-ref="triggerList"
+	/>
+</beans>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

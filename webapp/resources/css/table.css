@@ -1,0 +1,148 @@
+@charset "UTF-8";
+
+.table-wrap {
+    text-align: center;
+}
+
+.text-left {
+	text-align: left;
+	padding-left: 10px;
+}
+
+.paging-wrap {
+	display: flex;
+    justify-content: center;
+}
+
+.writing-view-wrap {
+	padding: 40px 32px 38px;
+	border: 1px solid #dadada;
+	border-radius: 8px;
+    box-shadow: 0 10px 18px 0 rgb(0 75 151 / 10%);
+    background: #fff;
+    margin-bottom: 60px;
+}
+
+.writing-title > span {
+	font-size: 24px;	
+}
+
+.writing-info-wrap {
+	display: flex;
+    justify-content: flex-end;
+}
+
+.writing-info-wrap > div {
+	margin-left: 14px;
+	color:#949494;
+}
+
+.writing-content {
+	min-height: 250px;
+	margin-top: 8px;
+}
+
+.comment-wrap {
+	margin-top: 20px;
+}
+
+.recommend-wrap {
+	margin-top: 10px;
+	display: flex;
+	justify-content: flex-start;
+	font-size: 13px;
+	color: #666;
+}
+
+.recommend-wrap > div {
+	margin-right: 10px;
+}
+
+.recommend {
+    color: #666;
+
+}
+.recommend-line {
+	vertical-align: top;
+    width: 1px;
+    height: 16px;
+    background: #d8d8d8;
+}
+
+.comment-box-wrap {
+	display: flex;
+	color: #949494;
+    font-size: 13px;
+}
+
+.comment-list {
+	color: #949494;
+}
+
+.comment-box-wrap > div {
+	margin-left: 14px;
+}
+
+.comment-list-wrap {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid #ddd;
+	padding: 16px 10px 16px 10px;
+}
+
+.board-search-wrap {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.community-box-wrap {
+	display: flex;
+    justify-content: space-around;
+    margin-top: 14px;
+}
+
+.board-btn-wrap {
+	display: flex;
+	justify-content: center;
+	margin-top: 16px;
+}
+
+.board-btn-wrap > button:first-child {
+	margin-right: 10px;
+}
+
+.input-group-wrap {
+	width: 500px;
+}
+
+.board-btn-wrap-search{
+	margin-left: 6px;
+}
+
+.tr-gray {
+	border-top: 2px solid #bbc6cb;
+	background-color: #dee6ef;
+	font-family: 'NanumSquareRound';
+}
+
+.writing-view-wrap > form > table {
+	width: 100%;
+	font-family: 'NanumSquareRound';
+}
+
+.border-table > tbody > tr > th {
+	border-top: 0;
+	vertical-align: middle;
+}
+
+.border-table > tbody > tr > td {
+	border-top: 0;
+	vertical-align: middle;
+}
+
+.write-input {
+	border: 1px solid #d1d1d1;
+	padding: 4px;
+}
+
+

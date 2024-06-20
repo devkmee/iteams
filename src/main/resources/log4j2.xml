@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+<!-- logging : log 기록 행위 -->
+<!-- log message -->
+<!-- layout : message 형식 -->
+<!-- appender : message 기록 매체 -->
+<!-- logger : message 기록자 -->
+<!-- level : logging event 등급 debug -> trace -> info -> warn -> error -> fatal -->
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d{HH:mm:ss.SSS} %-5level %logger{1.1.~.~} - %msg%n" />
+		</Console>
+		
+		<File name="spring" fileName="d:/logs/spring/log.log">
+        	<PatternLayout
+				pattern="%d{HH:mm:ss.SSS} %-5level %logger{1.1.~.~} - %msg%n" />
+        </File>
+        
+		<File name="security" fileName="d:/logs/security/log.log">
+        	<PatternLayout
+				pattern="%d{HH:mm:ss.SSS} %-5level %logger{1.1.~.~} - %msg%n" />
+        </File>
+        
+		<File name="sql" fileName="d:/logs/sql/log.log">
+        	<PatternLayout
+				pattern="%d{HH:mm:ss.SSS} %-5level %logger{1.1.~.~} - %msg%n" />
+        </File>
+        
+	</Appenders>
+	
+	
+	<Loggers>
+		<Logger name="org.springframework.security" level="info" additivity="false">			
+			<AppenderRef ref="security" />
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org.springframework" level="info" additivity="false">
+			<AppenderRef ref="spring" />	
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="kr.or.ddit" level="info" additivity="false">
+			<AppenderRef ref="spring" />
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="jdbc.sqltiming" level="debug" additivity="false">
+			<AppenderRef ref="sql" />
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="jdbc.resultsettable" level="debug" additivity="false">
+			<AppenderRef ref="sql" />
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Root level="error">
+			<AppenderRef ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>

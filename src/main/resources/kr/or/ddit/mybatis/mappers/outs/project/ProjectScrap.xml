@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.projectboard.dao.ProjectScrapDAO">
+
+<insert id="scarp" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	INSERT INTO SCRAP_PRO(
+	    BO_NUM
+	   , DEV_ID
+	   , SCRAP_DATE
+	)
+	VALUES (
+	   #{boNum,jdbcType=VARCHAR}
+	   , #{devId,jdbcType=VARCHAR}
+	   , SYSDATE
+    )
+</insert>
+
+<delete id="unScrap" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	DELETE SCRAP_PRO
+	WHERE DEV_ID = #{memId}
+	  AND BO_NUM = #{boNum}
+</delete>
+
+<select id="selectScrap" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" >
+	SELECT
+		DEV_ID
+	FROM
+		SCRAP_PRO
+	WHERE DEV_ID = #{memId}
+	  AND BO_NUM = #{boNum}	
+</select>
+
+<select id="selectScrapList" resultType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT 
+					   PP.BO_NUM
+					 , PP.PROJECT_NAME
+					 , PP.PROJECT_RECRUIT
+				     , PP.PROJECT_TECH
+				     , TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+				     , TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+				     , GG.BO_TITLE 
+				     , PROJECT_SCALE 
+				     , (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+				FROM PRO_BOARD PP
+				LEFT OUTER JOIN GEN_BOARD GG ON 
+					(PP.BO_NUM = GG.BO_NUM)
+				LEFT OUTER JOIN SCRAP_PRO SS ON 
+					(PP.BO_NUM = SS.BO_NUM)
+				WHERE PP.PERMISSION_NY = 'Y'
+				  AND PP.COMPLETED_NY = 'N'
+				  AND GG.DELETED_NY = 'N'
+				  AND SS.DEV_ID = #{memId} 
+				ORDER BY GG.WRITE_DATE DESC
+			) A	
+		) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT COUNT(*)
+	FROM SCRAP_PRO
+	WHERE DEV_ID = #{memId} 
+</select>
+
+<select id="selectScrapView" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+         BO_NUM, PROJECT_NAME, PROJECT_SCALE, PROJECT_PRICE, 
+         PROJECT_REQ, PROJECT_TECH, PROJECT_JOB, TO_CHAR(LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+      FROM PRO_BOARD
+      WHERE BO_NUM = #{number}
+</select>
+
+<update id="incrementCount" parameterType="map">
+	UPDATE GEN_BOARD
+	SET
+	${incType} = ${incType} + 1
+	WHERE BO_NUM = #{number}
+</update>
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>

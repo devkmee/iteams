@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.common.dao.GetRankDAO">
+
+<select id="projectRank" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT *
+	FROM(
+		SELECT DEV_ID
+		     ,COUNT(DEV_ID) COMPLETE_COUNT
+		FROM PROJECT_MEM
+		WHERE PRO_NO IN(
+		            SELECT PRO_NO
+		            FROM TBL_PRO
+		            WHERE PROJECT_STATE = 'END')
+		  AND AUTHORITY != 'PM'          
+		GROUP BY DEV_ID
+		ORDER BY COMPLETE_COUNT DESC
+	)
+	WHERE ROWNUM BETWEEN 1 AND 3
+</select>
+
+<select id="activeRank" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT *
+	  FROM(
+		  SELECT MEM_ID
+		      , COUNT(MEM_ID) ACTIVE_COUNT
+		    FROM GEN_BOARD
+		   WHERE MEM_ID != 'admin'
+	         AND MEM_ID != 'iteams'
+	       GROUP BY MEM_ID
+	       ORDER BY ACTIVE_COUNT DESC
+	  )
+	 WHERE   ROWNUM BETWEEN 1 AND 3
+</select>
+
+<select id="reviewRank" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT *
+	FROM(
+		SELECT CLI_ID, ROUND(AVG(REVIEW_SCORE), 2) REVIEW_COUNT
+	      FROM REVIEW 
+	     WHERE DELETED_NY = 'N'
+	     GROUP BY CLI_ID
+	     ORDER BY REVIEW_COUNT DESC
+	)
+	WHERE ROWNUM BETWEEN 1 AND 3
+</select>
+
+</mapper>

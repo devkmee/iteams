@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.projectboard.dao.ProjectApprovalDAO">
+
+	<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT COUNT(*) 
+		FROM PRO_BOARD PP LEFT OUTER JOIN GEN_BOARD GG ON (PP.BO_NUM = GG.BO_NUM)
+		WHERE PP.PERMISSION_NY IS NULL
+		AND PP.COMPLETED_NY = 'N'
+		AND GG.DELETED_NY = 'N'
+	</select>
+	
+	<select id="selectProjectList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT 
+					   PP.BO_NUM
+					 , PP.PROJECT_NAME
+					 , PP.PROJECT_RECRUIT
+				     , PP.PROJECT_TECH
+				     , PP.PROJECT_PRICE
+				     , TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+				     , TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+				     , GG.BO_TITLE 
+				     , GG.MEM_ID
+				     , TO_CHAR(GG.WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE 
+				     , PROJECT_SCALE 
+				     , (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+				FROM PRO_BOARD PP
+				LEFT OUTER JOIN GEN_BOARD GG ON 
+					(PP.BO_NUM = GG.BO_NUM)
+				WHERE PP.PERMISSION_NY IS NULL
+				  AND PP.COMPLETED_NY = 'N'
+				  AND GG.DELETED_NY = 'N'
+				ORDER BY GG.WRITE_DATE DESC
+			) A	
+		) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectProject" parameterType="string" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+			BO_NUM, PROJECT_NAME, PROJECT_SCALE, PROJECT_PRICE, 
+			PROJECT_REQ, PROJECT_TECH, PROJECT_JOB, TO_CHAR(LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+		FROM PRO_BOARD
+		WHERE BO_NUM = #{number}
+	</select>
+	
+	<update id="approveProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE PRO_BOARD
+	    SET
+	    PERMISSION_DATE = SYSDATE,
+	    PERMISSION_NY = 'Y'
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+	<update id="approveProjctUpdateGenboard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE GEN_BOARD
+		SET
+		PUBLIC_NY = 'Y'
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+	<update id="refuseProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE PRO_BOARD
+	    SET
+	    PERMISSION_NY = 'N'
+	    ,PROJECT_REFUSE = #{projectRefuse,jdbcType=VARCHAR}
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+
+</mapper>

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.hire.dao.ApplyProjectDAO">
+
+<sql id="selectApplyWhere">
+	<where>
+		<choose>
+			<when test=" @org.apache.commons.lang3.StringUtils@isBlank(appId)">
+				APP_NO = #{appNo}
+			</when>
+			<otherwise>
+				    APP_ID = #{appId}
+	  			AND BO_NUM = #{boNum}
+			</otherwise>
+		</choose>
+	</where>
+</sql>
+
+<select id="selectApply" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" >
+	SELECT
+		  APP_NO
+		, BO_NUM
+		, APP_ID
+		, APP_DATE
+		, HIRED_NY
+		, HIRE_DATE
+		, (SELECT DEV_NAME FROM DEV WHERE APP_ID = DEV_ID) AS CLIENT_NAME
+	FROM
+		PRO_APP
+	<include refid="selectApplyWhere" />
+</select>
+
+
+<insert id="insertApplyProject" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+<selectKey keyProperty="appNo" resultType="String" order="BEFORE">
+	SELECT PROJECT_APP_SEQ.NEXTVAL AS APP_NO
+	FROM DUAL
+</selectKey>
+	INSERT
+		INTO
+		PRO_APP
+	      (
+			  APP_NO
+			, BO_NUM
+			, APP_ID
+			, APP_DATE
+			, HIRED_NY
+			, HIRE_DATE
+		)
+	VALUES(
+		  #{appNo}
+		, #{boNum}
+		, #{appId}
+		, SYSDATE
+		, '0'
+		, NULL
+	)
+</insert>
+
+
+
+<select id="selectBOARDTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT
+		COUNT(*)
+	FROM
+		 PRO_BOARD PP LEFT OUTER JOIN GEN_BOARD GG ON (PP.BO_NUM = GG.BO_NUM)
+	WHERE MEM_ID = #{memId}
+	AND PP.PERMISSION_NY = 'Y'
+	AND PP.COMPLETED_NY = 'N'
+	AND GG.DELETED_NY != 'Y'
+</select>
+
+<select id="selectApplyListForClient" resultType="kr.or.ddit.iteams.common.vo.OutsTotalVO" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT
+				     PP.BO_NUM
+				   , TO_CHAR(PP.PERMISSION_DATE, 'YYYY.MM.DD') AS PERMISSION_DATE
+                   , PP.PROJECT_NAME
+                   , PP.PROJECT_RECRUIT
+                   , PP.PROJECT_TECH
+                   , PP.PROJECT_JOB
+                   , TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+				   , TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+				   , GG.BO_TITLE
+				   , (SELECT CLIENT_NAME 
+				   		FROM CLIENT C 
+				   		WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+				   , (SELECT MAX(APP_NO) 
+				   		FROM PRO_APP AA 
+				   		WHERE AA.BO_NUM = PP.BO_NUM) AS APP_NY
+				   , (SELECT COUNT(*) FROM PRO_APP WHERE BO_NUM = PP.BO_NUM) APP_COUNT
+				   
+				FROM
+				   PRO_BOARD PP
+				LEFT OUTER JOIN GEN_BOARD GG ON
+				   (PP.BO_NUM = GG.BO_NUM)
+				WHERE
+				   PP.PERMISSION_NY = 'Y'
+				   AND PP.COMPLETED_NY = 'N'
+				   AND GG.MEM_ID = #{memId}
+				   AND GG.DELETED_NY != 'Y'
+				ORDER BY
+				   GG.WRITE_DATE DESC
+			) A
+		) B
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+
+
+<sql id="totalWhere">
+	<where>
+		<choose>
+			<when test=" @org.apache.commons.lang3.StringUtils@isNotBlank(boNum)">
+				BO_NUM = #{boNum}
+			</when>
+			<when test=" @org.apache.commons.lang3.StringUtils@isNotBlank(appId)">
+				APP_ID = #{appId}
+			</when>
+		</choose>
+	</where>
+</sql>
+<select id="selectAPPTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT
+		COUNT(*)
+	FROM
+		PRO_APP
+	<include refid="totalWhere" />
+</select>
+
+<select id="selectApplyListOneProject" resultType="kr.or.ddit.iteams.common.vo.OutsTotalVO" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  AA.APP_NO
+				, AA.BO_NUM
+				, AA.APP_ID
+				, TO_CHAR(AA.APP_DATE, 'YYYY.MM.DD') AS APP_DATE
+				, AA.HIRED_NY
+				, TO_CHAR(AA.HIRE_DATE, 'YYYY.MM.DD') AS HIRE_DATE
+				, BB.PROJECT_NAME
+				, DD.DEV_NAME
+				, DD.DEV_JOB
+				, DD.DEV_CAREER
+				, DD.DEV_EDU
+				, DD.DEV_MAJOR
+				, DD.DEV_IMG
+			FROM
+				PRO_APP AA LEFT OUTER JOIN PRO_BOARD BB ON (AA.BO_NUM = BB.BO_NUM)
+				           LEFT OUTER JOIN DEV DD ON(AA.APP_ID = DD.DEV_ID)
+			WHERE
+				AA.BO_NUM = #{boNum}
+			ORDER BY AA.HIRED_NY, AA.APP_DATE DESC
+		) A  
+	) B 
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectApplyListForDev" resultType="kr.or.ddit.iteams.common.vo.OutsTotalVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  PP.BO_NUM
+				, PP.PROJECT_NAME
+				, PP.PROJECT_JOB
+				, TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+				, TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+				, PP.COMPLETED_NY
+				, PP.PERMISSION_NY
+				, AA.HIRED_NY
+				, TO_CHAR(AA.APP_DATE, 'YYYY.MM.DD') AS APP_DATE
+				, (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+			FROM
+			    PRO_BOARD PP LEFT OUTER JOIN PRO_APP AA ON(PP.BO_NUM = AA.BO_NUM)
+			                 LEFT OUTER JOIN GEN_BOARD GG ON(PP.BO_NUM = GG.BO_NUM)             
+			WHERE
+			    AA.APP_ID = #{appId}
+			ORDER BY AA.APP_DATE DESC
+		) A  
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<delete id="DeleteApplyProject" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	DELETE
+		PRO_APP
+	WHERE
+		APP_ID = #{appId}
+	AND BO_NUM = #{boNum}
+</delete>
+
+<select id="selectDevProfile" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	SELECT
+		  DD.DEV_ID
+		, DD.DEV_NAME
+		, DD.DEV_BIR
+		, DD.DEV_JOB
+		, DD.DEV_TECH
+		, DD.DEV_EDU
+		, DD.DEV_CAREER
+		, DD.DEV_PORT
+		, DD.DEV_IMG
+		, DD.PUBLIC_NY
+		, DD.DEV_MAJOR
+		, MM.MEM_TEL
+		, MM.MEM_MAIL
+		, AA.APP_NO
+		, TO_CHAR(MEETING_DATE,'YYYY-MM-DD HH24:MI') MEETING_DATE
+		, MEETING_ROOM
+		, MEETING_NY
+		, AA.HIRED_NY
+		, AA.APP_RETURN
+	FROM
+		DEV DD LEFT OUTER JOIN MEMBER MM ON(DD.DEV_ID = MM.MEM_ID)
+		       LEFT OUTER JOIN PRO_APP AA ON(DD.DEV_ID = AA.APP_ID)
+		       LEFT OUTER JOIN PRO_BOARD C ON(AA.BO_NUM = C.BO_NUM)
+	WHERE 
+		APP_NO = #{appNo}
+</select>
+
+<update id="updateHireApply" parameterType="kr.or.ddit.iteams.common.vo.OutsTotalVO">
+	UPDATE
+		PRO_APP
+	SET
+		  HIRED_NY = '1'
+		, HIRE_DATE = SYSDATE
+	WHERE APP_NO = #{appNo}
+</update>
+
+<update id="updateReturnApply" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		PRO_APP
+	SET
+		  HIRED_NY = '2'
+		, HIRE_DATE = SYSDATE
+		, APP_RETURN = #{appReturn,jdbcType=VARCHAR}
+	WHERE APP_NO = #{appNo}
+</update>
+
+<update id="updateAppMeeting" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	UPDATE
+		PRO_APP
+	SET MEETING_DATE = TO_DATE(#{meetingDate,jdbcType=VARCHAR},'YYYY-MM-DD HH24:MI')
+	WHERE APP_NO = #{appNo}
+</update>
+
+</mapper>

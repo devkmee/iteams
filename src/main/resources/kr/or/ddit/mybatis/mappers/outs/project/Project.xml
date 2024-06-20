@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.board.projectboard.dao.OutsProjectDAO">
+
+<!-- 	<sql id="searchFrag"> -->
+<!-- 		<where> -->
+<!-- 			<if test="searchVO neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)"> -->
+<!-- 				<choose> -->
+<!-- 					<when test="searchVO.searchType eq 'pName'"> -->
+<!-- 						<![CDATA[  -->
+<!-- 						INSTR(PROJECT_NAME, #{searchVO.searchWord}) > 0 -->
+<!-- 						]]> -->
+<!-- 					</when> -->
+<!-- 					<when test="searchVO.searchType eq 'pTech'"> -->
+<!-- 					    <![CDATA[ -->
+<!-- 						INSTR(PROJECT_TECH, #{searchVO.searchWord}) > 0 -->
+<!-- 						]]> -->
+<!-- 					</when> -->
+<!-- 				</choose> -->
+<!-- 			</if> -->
+<!-- 		</where> -->
+<!-- 	</sql> -->
+
+	<sql id="searchFrag">
+		<trim prefix=" WHERE " prefixOverrides="AND">
+			PP.PERMISSION_NY = 'Y'
+			AND PP.COMPLETED_NY = 'N'
+			AND GG.DELETED_NY = 'N'
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(memId)">
+				AND GG.MEM_ID = #{memId}
+			</if>
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(appId)">
+				AND C.APP_ID = #{appId}
+			</if>
+			<if test="projectTechList neq null and  projectTechList.size gt 0">
+				<foreach collection="projectTechList" item="projectTech" open="AND (" close=")" separator=" AND ">
+					INSTR(PROJECT_TECH, #{projectTech}) > 0
+				</foreach>
+			</if>
+			<if test="projectJobList neq null and  projectJobList.size gt 0">
+				<foreach collection="projectJobList" item="projectJob" open="AND PROJECT_JOB IN (" close=")" separator=",">
+					#{projectJob}
+				</foreach>
+			</if>
+			<if test="projectScaleList neq null and projectScaleList.size gt 0">
+				<foreach collection="projectScaleList" item="projectScale" open="AND PROJECT_SCALE IN (" close=")" separator=",">
+					#{projectScale}
+				</foreach>
+			</if>
+			<if test="officeNyList neq null and officeNyList.size gt 0">
+				<foreach collection="officeNyList" item="officeNy" open="AND OFFICE_NY IN (" close=")" separator=",">
+					#{officeNy}
+				</foreach>
+			</if>			
+		</trim>
+	</sql>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT COUNT(*)
+		FROM PRO_BOARD PP LEFT OUTER JOIN GEN_BOARD GG ON (PP.BO_NUM = GG.BO_NUM)
+			 LEFT OUTER JOIN PRO_APP C ON(PP.BO_NUM = C.BO_NUM)
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectProjectList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT 
+					   PP.BO_NUM
+					 , TO_CHAR(PP.PERMISSION_DATE, 'YYYY.MM.DD') AS PERMISSION_DATE
+					 , PP.PROJECT_NAME
+					 , PP.PROJECT_RECRUIT
+				     , PP.PROJECT_TECH
+				     , TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+				     , TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+				     , GG.BO_TITLE 
+				     , PROJECT_SCALE 
+				     , (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+				FROM PRO_BOARD PP
+				LEFT OUTER JOIN GEN_BOARD GG ON 
+					(PP.BO_NUM = GG.BO_NUM)
+				LEFT OUTER JOIN PRO_APP C ON(PP.BO_NUM = C.BO_NUM)
+				<include refid="searchFrag"></include>
+				ORDER BY GG.WRITE_DATE DESC
+			) A	
+		) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+<!-- 	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="projectMap" autoMapping="true"> -->
+<!-- 		<id property="proNo" column="NO"/> -->
+<!-- 		<collection property="attatchList" ofType="AttatchVO" autoMapping="true" /> -->
+<!-- 	</resultMap> -->
+	
+		
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="proBoardMap" autoMapping="true">
+		<id property="boNum" column="BO_NUM"/>
+<!-- 		<result typeHandler="org.apache.ibatis.type.ClobTypeHandler" property="boContent" column="BO_CONTENT" jdbcType="CLOB" javaType="java.lang.Object"/> -->
+		<collection property="attachList" ofType="kr.or.ddit.iteams.common.vo.AttachTotalVO" autoMapping="true">
+			<id property="attNo" column="ATT_NO"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="proBoardMap">
+		SELECT
+		DISTINCT
+		A.BO_NUM
+		, PROJECT_NAME
+		, PROJECT_SCALE
+		, PROJECT_PRICE
+		, PROJECT_REQ
+		, PROJECT_TECH
+		, PROJECT_JOB
+		, TO_CHAR(LIMIT_DATE, 'YYYY-MM-DD') AS LIMIT_DATE
+		, TO_CHAR(PERMISSION_DATE, 'YYYY-MM-DD') AS PERMISSION_DATE
+		, PROJECT_RECRUIT
+		, C.MEM_ID
+		, TO_CHAR(C.BO_CONTENT) BO_CONTENT
+		, C.BO_TITLE
+		, D.ATT_NO 
+		, D.ATTACH_ORIGIN
+		, (SELECT CLIENT_NAME FROM CLIENT WHERE CLI_ID = C.MEM_ID) CLIENT_NAME
+		FROM
+			PRO_BOARD A, GEN_BOARD C, GEN_ATTACH D
+		WHERE A.BO_NUM = C.BO_NUM(+)
+		AND A.BO_NUM = D.BO_NUM(+)
+		AND	A.BO_NUM = #{boNum}
+	</select>
+	
+	<select id="selectProjectApp" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+		A.BO_NUM
+		, PROJECT_NAME
+		, PROJECT_SCALE
+		, PROJECT_PRICE
+		, PROJECT_REQ
+		, PROJECT_TECH
+		, PROJECT_JOB
+		, TO_CHAR(LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+		, TO_CHAR(MEETING_DATE,'YYYY-MM-DD HH24:MI') MEETING_DATE
+		, MEETING_ROOM
+		, MEETING_NY
+		, APP_NO
+		, TO_CHAR(B.APP_DATE, 'YYYY-MM-DD HH24:MI') APP_DATE
+		, HIRED_NY
+		, APP_RETURN
+		FROM
+			PRO_BOARD A, PRO_APP B
+		WHERE
+		    A.BO_NUM = B.BO_NUM(+) 
+		AND	A.BO_NUM = #{boNum}
+		AND B.APP_ID = #{memId}	
+	</select>
+	
+	<update id="incrementCount" parameterType="map">
+		UPDATE GEN_BOARD
+		SET
+		${incType} = ${incType} + 1
+		WHERE BO_NUM = #{number}
+	</update>
+	
+	<insert id="insertProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<selectKey keyProperty="boNum" keyColumn="BO_NUM" resultType="string" order="BEFORE">
+			SELECT GBOARD_SEQ.NEXTVAL AS BO_NUM
+			FROM DUAL
+		</selectKey>
+			INSERT ALL
+			INTO GEN_BOARD(
+				BO_NUM
+				, BO_CODE
+				, MEM_ID
+				, BO_TITLE
+				, BO_CONTENT
+			    , WRITE_DATE
+			    , DELETED_NY
+			)
+			VALUES (
+				#{boNum,jdbcType=VARCHAR}
+				, 'GP'
+				, #{memId,jdbcType=VARCHAR}
+				, #{boTitle,jdbcType=VARCHAR}
+				, #{boContent,jdbcType=VARCHAR}
+				, SYSDATE
+				, 'N'
+			)
+			INTO PRO_BOARD(
+				BO_NUM
+				, PROJECT_NAME
+				, PROJECT_SCALE
+				, PROJECT_PRICE
+				, PROJECT_REQ
+				, PROJECT_TECH
+				, PROJECT_JOB 
+				, LIMIT_DATE
+				, COMPLETED_NY
+				, PROJECT_RECRUIT
+				, OFFICE_NY
+				, MEETING_ROOM
+			)
+			VALUES (
+				#{boNum,jdbcType=VARCHAR}
+				, #{projectName,jdbcType=VARCHAR}
+				, #{projectScale,jdbcType=VARCHAR}
+				, #{projectPrice,jdbcType=VARCHAR}
+				, #{projectReq,jdbcType=VARCHAR}
+				, #{projectTech,jdbcType=VARCHAR}
+				, #{projectJob,jdbcType=VARCHAR}
+				, #{limitDate,jdbcType=DATE}
+				, 'N'
+				, #{projectRecruit,jdbcType=VARCHAR}
+				, #{officeNy,jdbcType=VARCHAR}
+				, #{meetingRoom,jdbcType=VARCHAR}
+			)
+			SELECT * FROM DUAL
+	</insert>
+	
+<!-- 	<delete id="deleteBoard" parameterType="int"> -->
+<!-- 		MERGE INTO FREEBOARD F -->
+<!-- 		USING ( -->
+<!-- 			SELECT BO_NO -->
+<!-- 				, (SELECT COUNT(*) FROM FREEBOARD B WHERE A.BO_NO = B.BO_PARENT ) CHILDCNT -->
+<!-- 			FROM FREEBOARD A -->
+<!-- 		) C ON (F.BO_NO = #{boNo} AND F.BO_NO = C.BO_NO) -->
+<!-- 		WHEN MATCHED THEN -->
+<!-- 		UPDATE -->
+<!-- 		SET -->
+<!-- 		BO_TITLE = '해당 글은 삭제됨.',  -->
+<!-- 		BO_CONTENT = NULL -->
+<!-- 		DELETE -->
+<!-- 		WHERE C.CHILDCNT = 0 -->
+<!-- 	</delete> -->
+	<update id="deleteProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE GEN_BOARD
+	    SET
+	    DELETED_NY = 'Y'
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+
+	<update id="updateGen" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE GEN_BOARD
+	    SET
+	    BO_TITLE = #{boTitle,jdbcType=VARCHAR},
+	    BO_CONTENT = #{boContent,jdbcType=CLOB}
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+	<update id="updatePro" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE PRO_BOARD
+	    SET
+	    PROJECT_NAME = #{projectName,jdbcType=VARCHAR},
+	    PROJECT_SCALE = #{projectScale,jdbcType=VARCHAR},
+	    PROJECT_PRICE = #{projectPrice,jdbcType=VARCHAR},
+	    PROJECT_REQ = #{projectReq,jdbcType=VARCHAR},
+	    PROJECT_TECH = #{projectTech,jdbcType=VARCHAR},
+	    PROJECT_JOB = #{projectJob,jdbcType=VARCHAR},
+	    PERMISSION_DATE = NULL,
+	    PERMISSION_NY = 'N',
+	    PERMISSION_ADMIN = NULL,
+	    LIMIT_DATE = #{limitDate,jdbcType=DATE},
+	    COMPLETED_NY = 'N',
+	    PROJECT_RECRUIT = #{projectRecruit,jdbcType=VARCHAR},
+	    OFFICE_NY = #{officeNy,jdbcType=VARCHAR}	    
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+	</update>
+	
+	<select id="selectMainProjectList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		WITH A AS(
+		SELECT
+			A.BO_NUM
+			, A.MEM_ID
+			, BO_TITLE
+			, BO_CONTENT
+			, TO_CHAR(WRITE_DATE,'YYYY-MM-DD') WRITE_DATE
+			, PROJECT_NAME
+			, PROJECT_SCALE
+			, PROJECT_PRICE
+			, PROJECT_REQ
+			, PROJECT_TECH
+			, PROJECT_JOB
+			, PROJECT_RECRUIT
+			, TO_CHAR(PERMISSION_DATE,'YYYY-MM-DD') PERMISSION_DATE
+			, TO_CHAR(LIMIT_DATE,'YYYY-MM-DD') LIMIT_DATE
+			, CLI_ID
+			, BUSINESS_NUM
+			, CLIENT_NAME
+			, CLIENT_ADD
+			, MANAGER_NAME
+			, MANAGER_RANK
+			, CLIENT_CEO
+			, CLIENT_HOMEPAGE
+			, CLIENT_SCALE
+			, CLIENT_ANNI
+			, CLIENT_SALES
+			, CLIENT_ZIP
+			, CLIENT_ADDRET
+			, CLIENT_ADDX
+			, CLIENT_ADDY	
+		FROM
+			GEN_BOARD A, PRO_BOARD B, MEMBER C, CLIENT D
+		WHERE A.BO_NUM = B.BO_NUM(+)
+		AND A.MEM_ID = C.MEM_ID(+)
+  		AND C.MEM_ID = D.CLI_ID(+)
+  		AND A.BO_CODE = 'GP'
+  		AND LIMIT_DATE > SYSDATE
+  		AND PERMISSION_DATE IS NOT NULL
+		  <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(projectJob)">
+		  	AND INSTR(PROJECT_JOB, #{projectJob}) > 0
+		  </if>
+		ORDER BY WRITE_DATE DESC
+		) , B AS (
+			SELECT A.*
+				  ,ROWNUM RNUM
+			FROM A
+		) SELECT B.*
+		  FROM B
+		  WHERE RNUM BETWEEN 1 AND 9
+	</select>
+	
+	<update id="updateMeetingState" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		UPDATE PRO_APP
+		SET MEETING_NY = 'Y'
+		WHERE APP_NO = #{appNo}
+	</update>
+	
+	<select id="selectTraceProject" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+			DISTINCT
+			A.BO_NUM
+			, PROJECT_NAME
+			, PROJECT_SCALE
+			, PROJECT_PRICE
+			, PROJECT_REQ
+			, PROJECT_TECH
+			, PROJECT_JOB
+			, PROJECT_RECRUIT
+			, TO_CHAR(LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+		FROM
+			PRO_BOARD A, PRO_APP B
+		WHERE
+		    A.BO_NUM = B.BO_NUM(+) 
+		AND	A.BO_NUM = #{boNum}
+	</select>
+	
+	<select id="selectRecProjectList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT D.*
+		FROM(
+			SELECT 
+				B.BO_NUM
+				,B.BO_TITLE
+				,(SELECT CLIENT_NAME FROM CLIENT WHERE CLI_ID = B.MEM_ID) CLIENT_NAME
+				,A.PROJECT_NAME
+				,A.PROJECT_SCALE
+				,A.PROJECT_PRICE
+				,TO_CHAR(A.PERMISSION_DATE,'YYYY-MM-DD') PERMISSION_DATE
+				,TO_CHAR(A.LIMIT_DATE,'YYYY-MM-DD') LIMIT_DATE
+				,A.PROJECT_TECH
+				,A.PROJECT_RECRUIT
+			FROM PRO_BOARD A, GEN_BOARD B
+			WHERE A.BO_NUM = B.BO_NUM(+)
+			AND INSTR(A.PROJECT_JOB, (SELECT C.DEV_JOB FROM DEV C WHERE C.DEV_ID = #{memId})) > 0
+			AND A.PERMISSION_DATE IS NOT NULL
+			AND A.LIMIT_DATE > SYSDATE
+			ORDER BY B.WRITE_DATE DESC
+		) D
+		WHERE ROWNUM BETWEEN 1 AND 3	
+	</select>
+	
+	<select id="selectIngProject" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+			  PROMEM_NUM
+			, MM.PRO_NO
+			, AUTHORITY
+			, JOIN_DATE
+			, OUT_DATE
+			, OUTED_NY
+			, DEV_ID
+		FROM
+			PROJECT_MEM MM INNER JOIN TBL_PRO PP ON (MM.PRO_NO = PP.PRO_NO)
+		WHERE DEV_ID = #{memId}
+		  AND PP.PROJECT_STATE = 'ING'
+		  AND OUTED_NY = 'N'
+	</select>
+	
+	
+	<update id="deadline" parameterType="string">
+		UPDATE PRO_BOARD
+	    SET 
+	    COMPLETED_NY = 'Y' 
+		WHERE BO_NUM = #{boNum,jdbcType=VARCHAR} 
+	</update>
+
+</mapper>

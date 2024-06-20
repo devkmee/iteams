@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 맵핑될 DAO 인터페이스의 Full name을 준다 -->
+<mapper namespace="kr.or.ddit.iteams.pms.board.daily.dao.DailyDAO">
+  	
+  	 <sql id="searchFrag">
+  	 	<trim prefix=" WHERE " prefixOverrides="AND">
+  	 		BO_CODE = 'PW'
+  	 		AND PRO_NO = #{proNo}
+  	 		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boTitle)">
+  	 			AND INSTR(BO_TITLE, #{boTitle}) > 0
+  	 		</if>
+  	 		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boWriter)">
+  	 			AND INSTR(BO_WRITER, #{boWriter}) > 0
+  	 		</if>
+  	 		<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boContent)">
+  	 			AND INSTR(BO_CONTENT, #{boContent}) > 0
+  	 		</if>
+  	 	</trim>
+  	 </sql>
+  	
+	  <!-- 게시물 전체조회 -->
+	  <select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	             SELECT COUNT(*)
+	             FROM PMS_BOARD
+	             <include refid="searchFrag"></include>
+	  </select>
+	  <!-- 게시글 전체 목록 -->
+	  <select id="DailyBoardList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	            SELECT B.*
+	               FROM(
+	                     SELECT A.*, ROWNUM RNUM
+	                       FROM (
+	                             SELECT BO_NUM
+	                                   ,BO_TITLE
+	                                   ,TO_CHAR(WRITE_DATE, 'YYYY-MM-DD' )WRITE_DATE
+	                                   ,BO_HIT
+	                                   ,(SELECT DEV_NAME FROM LOGINVIEW WHERE MEM_ID = BO_WRITER) DEV_NAME
+	                                   ,(SELECT MANAGER_NAME FROM LOGINVIEW WHERE MEM_ID = BO_WRITER) MANAGER_NAME
+	                             FROM PMS_BOARD 
+	                             <include refid="searchFrag"></include>
+	                             ORDER BY WRITE_DATE DESC             
+	                             )A
+	                    )B 
+	               WHERE RNUM BETWEEN #{startRow} AND #{endRow}  
+	               ORDER BY B.RNUM DESC     
+	            <!--  SELECT B.*
+	               FROM(
+	                     SELECT A.*, ROWNUM RNUM
+	                       FROM (
+	                             SELECT *
+	                               FROM PMS_BOARD 
+	                              WHERE BO_CODE = 'PW'
+	                              AND PRO_NO = #{proNo}
+	                             )A
+	                       ORDER BY RNUM DESC;              
+	                    )B 
+	               WHERE RNUM BETWEEN #{startRow} AND #{endRow}  -->
+	  </select>    
+	  
+	  <resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="dailySelect" autoMapping="true">
+	  	<id property="boNum" column="BO_NUM"/>
+	  		<collection property="attachList" ofType="kr.or.ddit.iteams.common.vo.AttachTotalVO" autoMapping="true">
+	  			<id property="attNo" column="ATT_NO"/>
+	  		</collection>
+	  </resultMap>
+	  <!-- 게시물 상세보기 -->
+	   <select id="retrieveDaily" parameterType="int" resultMap="dailySelect">
+	             SELECT A.BO_NUM
+                    ,A.BO_TITLE
+                    ,A.BO_CONTENT
+                    ,TO_CHAR(A.WRITE_DATE, 'YYYY-MM-DD HH:MM')WRITE_DATE
+                    ,A.BO_WRITER
+                 FROM PMS_BOARD A, PBOARD_ATT B, PMS_ATT C
+	             WHERE A.BO_NUM = B.BO_NUM(+)
+	             AND B.ATT_NO = C.ATT_NO(+) 
+	             AND A.BO_CODE = 'PW'
+	             AND A.BO_NUM = #{number}    
+	  </select> 
+	  <!-- 게시물삭제 -->
+ 	  <update id="deleteDaily" parameterType="kr.or.ddit.iteams.common.vo.MasterVO"  >
+ 	  		<selectKey resultType="string" keyProperty="boTitle" keyColumn="BO_TITLE" order="BEFORE">
+ 	  			SELECT BO_TITLE
+ 	  			FROM PMS_BOARD
+ 	  			WHERE BO_NUM = #{boNum}
+ 	  		</selectKey>
+ 	  		
+	             DELETE PMS_BOARD
+	             WHERE BO_NUM = #{boNum}
+	  </update> 
+	  <!-- 게시물수정 -->
+	  <update id="updateDaily" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	             UPDATE PMS_BOARD
+	             SET BO_TITLE = #{boTitle}
+	                ,BO_CONTENT = #{boContent}
+	             WHERE BO_NUM = #{boNum}
+	  </update>	
+		 
+	  <!-- 게시물작성 --> 
+	  <insert id="insertDailyBoard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<selectKey keyProperty="boNum" keyColumn="BO_NUM" resultType="string" order="BEFORE">
+			SELECT PBOARD_SEQ.NEXTVAL BO_NUM
+			FROM DUAL
+		</selectKey>
+			INSERT INTO PMS_BOARD(
+			    BO_NUM
+			   ,PRO_NO
+			   ,BO_CODE
+	           ,BO_TITLE
+	           ,BO_CONTENT
+	           ,WRITE_DATE
+	           ,BO_WRITER
+			)
+			VALUES (
+			     #{boNum,jdbcType=VARCHAR}
+			   , #{proNo, jdbcType=VARCHAR}
+			   , 'PW'
+			   , #{boTitle,jdbcType=VARCHAR}
+			   , #{boContent,jdbcType=VARCHAR}
+			   , SYSDATE
+			   , #{memId,jdbcType=VARCHAR}
+			 )
+	  </insert>
+	  
+	  <select id="selectDailyBoardAttachList" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO" parameterType="int">
+	  	SELECT
+			A.ATT_NO
+			, FTP_SAVEDPATH
+			, ATTACH_NAME 
+		FROM
+			PMS_ATT A, PBOARD_ATT B
+		WHERE A.ATT_NO = B.ATT_NO(+)
+		  AND B.BO_NUM = #{number}
+	  </select>	 
+		 
+	</mapper>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.login.dao.AuthDAO">
+	<select id="selectMemberForAuth" parameterType="string" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT MEM_ID
+			  ,MEM_PASS
+		FROM MEMBER
+		WHERE MEM_ID = #{memId}
+		  AND QUIT_NY IS NULL
+	</select>
+	
+	<select id="selectForLogin" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+			MEM_ID
+			, MEM_ROLE
+			, MEM_PASS
+			, MEM_TEL
+			, MEM_MAIL
+			, JOIN_DATE
+			, QUIT_NY
+			, QUIT_DATE
+			, DEV_NAME
+			, DEV_BIR
+			, DEV_JOB
+			, DEV_TECH
+			, DEV_EDU
+			, DEV_CAREER
+			, DEV_PORT
+			, DEV_IMG
+			, PUBLIC_NY
+			, BUSINESS_NUM
+			, CLIENT_NAME
+			, CLIENT_ADD
+			, MANAGER_NAME
+			, MANAGER_RANK
+			, CLIENT_CEO
+			, CLIENT_HOMEPAGE
+			, CLIENT_SCALE
+			, CLIENT_ANNI
+			, CLIENT_SALES
+		FROM LOGINVIEW
+		WHERE MEM_ID = #{memId}
+	</select>
+	
+	<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="PMSloginInfo" autoMapping="true">
+		<id property="memId" column="MEM_ID"/>
+		<collection property="proNoList" ofType="string" column="PRO_NO_LIST">
+			<id property="proNo" column="PRO_NO_LIST"/>
+		</collection>
+	</resultMap>
+		
+	<select id="selectMemberForPMSAuth" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultMap="PMSloginInfo">
+		SELECT
+		MEM_ID
+		, MEM_ROLE
+		, MEM_PASS
+		, MEM_TEL
+		, MEM_MAIL
+		, A.JOIN_DATE
+		, A.QUIT_NY
+		, A.QUIT_DATE
+		, DEV_NAME
+		, DEV_BIR
+		, DEV_JOB
+		, DEV_TECH
+		, DEV_EDU
+		, DEV_CAREER
+		, DEV_PORT
+		, DEV_IMG
+		, PUBLIC_NY
+		, BUSINESS_NUM
+		, CLIENT_NAME
+		, CLIENT_ADD
+		, MANAGER_NAME
+		, MANAGER_RANK
+		, CLIENT_CEO
+		, CLIENT_HOMEPAGE
+		, CLIENT_SCALE
+		, CLIENT_ANNI
+		, CLIENT_SALES
+		, PROMEM_NUM
+		, C.PRO_NO
+		, AUTHORITY
+		, OUTED_NY
+		, PROJECT_NAME
+		, CREATE_DATE
+		, COMPLETE_DATE
+		, PROJECT_STATE
+		, DELETED_NY
+		, MODIFY_DATE
+		, DELETE_DATE
+		, B.PRO_NO PRO_NO_LIST
+	FROM
+		LOGINVIEW A, PROJECT_MEM B, TBL_PRO C
+	WHERE A.MEM_ID = B.DEV_ID(+)
+	  AND B.PRO_NO = C.PRO_NO(+)
+	  AND C.PROJECT_STATE = 'ING'
+	  AND C.DELETED_NY = 'N'
+	  AND B.OUTED_NY = 'N'
+	  AND A.MEM_ID = #{memId}
+	</select>
+	
+</mapper>

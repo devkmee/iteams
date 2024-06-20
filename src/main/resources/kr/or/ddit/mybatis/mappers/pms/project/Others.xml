@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.pms.project.dao.OthersDAO">
+	<select id="selectProMemList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" >
+	SELECT *
+		  FROM MEMBER D
+			  ,DEV E
+			  ,(SELECT A.MEM_ID, C.APP_ID,C.APP_DATE,C.HIRED_NY,C.BO_NUM,B.PROJECT_NAME
+				  FROM GEN_BOARD A
+				      ,PRO_BOARD B
+				      ,PRO_APP C
+				 WHERE A.BO_NUM = B.BO_NUM(+)
+				   AND A.BO_NUM = C.BO_NUM(+)
+	               AND C.HIRED_NY = '1') F
+	      WHERE D.MEM_ID = E.DEV_ID
+		    AND D.MEM_ID = F.APP_ID
+		    AND F.BO_NUM = #{boNum}
+	</select>
+	<select id="selectProingMemList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+	    A.promem_num
+	   ,A.pro_no
+	   ,A.authority
+	   ,TO_CHAR(A.join_date,'YYYY-MM-DD HH24:MI') join_date
+	   ,A.out_date
+	   ,A.outed_ny
+	   ,A.dev_id
+	   ,B.*,C.*,D.manager_name
+	FROM
+	    project_mem A
+	    , dev B
+	    , tbl_pro C
+	    , client D
+	WHERE A.dev_id =B.dev_id(+)
+	  AND A.pro_no = C.pro_no(+)
+	  AND C.cli_id = D.cli_id
+	  AND outed_ny = 'N'
+	  AND A.PRO_NO = #{proNo}
+	</select>
+
+</mapper>

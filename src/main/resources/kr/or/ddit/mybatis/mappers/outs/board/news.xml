@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 맵핑될 DAO 인터페이스의 Full name을 줌 -->
+<mapper namespace="kr.or.ddit.iteams.outs.board.news.dao.NewsBoardDAO">
+
+   <sql id="searchFrag">
+     <trim prefix="WHERE" prefixOverrides="AND">
+        BO_CODE = 'GN'
+       <!--  AND BO_TITLE = #{boTitle}  -->
+       <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boTitle)">
+           AND INSTR(BO_TITLE, #{boTitle}) > 0
+       </if>
+       <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(boContent)">
+          <!--  AND BO_CONTENT = #{boContent} -->
+           AND BO_CONTENT = #{boContent}
+       </if>
+     </trim>
+   </sql>
+
+<!-- 게시물전체조회 -->
+  <select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+      SELECT COUNT(*)
+      FROM GEN_BOARD
+      <include refid="searchFrag"></include>
+  </select>
+<!-- 게시글 전체목록 조회 --> 
+  <select id="NewsBoardList" resultType="kr.or.ddit.iteams.common.vo.MasterVO" >
+      SELECT B.* 
+      FROM(
+             SELECT A.*, ROWNUM RNUM
+             FROM  ( 
+                   SELECT BO_NUM
+                          ,BO_TITLE
+                          ,BO_CONTENT
+                          ,TO_CHAR(WRITE_DATE, 'YYYY-MM-DD') WRITE_DATE
+                          ,BO_HIT
+                          ,MEM_ID
+                    FROM GEN_BOARD 
+                    <include refid="searchFrag"></include>
+                    ORDER BY WRITE_DATE DESC
+                   )A
+            )B
+      WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+      ORDER BY B.RNUM
+  </select>
+<!-- newsSelect 첨부파일 만들어주기 -->
+  <resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="newsSelect" autoMapping="true">
+    <id property="boNum" column="BO_NUM"/>
+      <collection property="attachList" ofType="kr.or.ddit.iteams.common.vo.AttachTotalVO" autoMapping="true">
+        <id property="attNo" column="ATT_NO"/>
+      </collection>
+  </resultMap> 
+<!-- 게시물상세보기 -->
+  <select id="retrieveNews" resultMap="newsSelect" parameterType="int">
+     SELECT A.BO_NUM
+          , A.BO_CODE
+          , A.MEM_ID
+          , A.BO_TITLE
+	      , A.BO_CONTENT
+	      , TO_CHAR(A.WRITE_DATE, 'YYYY-MM-DD HH:MI') WRITE_DATE
+	      , A.DELETED_NY
+	      , A.BO_HIT
+	      , A.PUBLIC_NY   
+       FROM GEN_BOARD A, PBOARD_ATT B
+      WHERE A.BO_NUM = B.BO_NUM(+)
+        AND A.BO_CODE = 'GN' 
+        AND A.BO_NUM = #{number}    
+  </select>
+<!-- 새로운 글 작성 -->
+   <insert id="insertNewsBoard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+    <selectKey keyProperty="boNum" keyColumn="BO_NUM" resultType="String" order="BEFORE">
+      SELECT GBOARD_SEQ.NEXTVAL BO_NUM
+      FROM DUAL
+    </selectKey>
+      INSERT INTO GEN_BOARD
+      (
+         BO_NUM
+        ,BO_CODE
+        ,MEM_ID
+        ,BO_TITLE
+        ,BO_CONTENT
+        ,WRITE_DATE
+       )
+      VALUES
+      (
+         #{boNum,jdbcType=VARCHAR} 
+        ,'GN'
+        , #{memId,jdbcType=VARCHAR}
+        , #{boTitle,jdbcType=VARCHAR}
+        , #{boContent,jdbcType=VARCHAR}
+        , SYSDATE
+       )
+  </insert> 
+  <!-- 게시물수정 -->
+  <update id="updateNews" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+       UPDATE GEN_BOARD
+       SET BO_TITLE = #{boTitle}
+          ,BO_CONTENT = #{boContent}
+       WHERE BO_NUM = #{boNum}   
+  </update>
+  <!-- 게시글삭제  -->
+  <update id="deleteNews" parameterType="String">
+       DELETE GEN_BOARD
+       WHERE BO_NUM = #{boNum,jdbcType=VARCHAR}
+  </update>    
+ 
+ <!-- 조회수 -->
+ <update id="incrementCount" parameterType="map">
+    UPDATE GEN_BOARD
+    SET 
+    ${incType} = ${incType} + 1
+    WHERE BO_NUM = #{boNum}
+ </update>
+
+</mapper>

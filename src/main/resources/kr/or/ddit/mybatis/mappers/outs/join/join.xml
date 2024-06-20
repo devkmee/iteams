@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.login.dao.JoinDAO">
+
+	<!-- Member 데이터 생성  -->
+	<insert id="insertMember" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+		INSERT INTO MEMBER (   
+			MEM_ID,
+			MEM_ROLE,
+			MEM_PASS,
+			MEM_TEL,
+			MEM_MAIL
+		) VALUES (
+			#{memId},
+			#{memRole},
+			#{memPass},
+			#{memTel},
+			#{memMailPrefix}||'@'||#{memMailSuffix}
+		)                                                      
+	</insert>
+	
+	<!-- Dev 데이터 생성  -->
+	<insert id="insertDevMember" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+		INSERT INTO DEV (   
+			DEV_ID
+			,DEV_NAME
+			,DEV_BIR
+			,DEV_JOB
+			,DEV_TECH
+			,DEV_EDU
+			,DEV_CAREER
+			,DEV_PORT
+			,DEV_MAJOR
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devImg)">
+			, DEV_IMG
+			</if>
+<!-- 			DEV_IMG -->
+		) VALUES (
+			#{memId}
+			,#{devName}
+			,#{devBir}
+			,#{devJob}
+			,#{devTech}
+			,#{devEdu}
+			,#{devCareer}
+			,#{devPort}
+			,#{devMajor}
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devImg)">
+			, #{devImg,jdbcType=VARCHAR}
+			</if>			
+<!-- 			#{devImg} -->
+		)                                                      
+	</insert>
+	
+	<!-- Dev Tech 데이터 생성  -->
+	<update id="insertDevTech" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+	        INTO DEV_TECH  
+	         ( 
+              DEV_ID, 
+              DEV_STACK
+	         ) 
+	         VALUES
+	         (
+              #{item.memId},
+			  #{item.devTech}
+	         )
+        </foreach>
+	</update>
+	
+	<!-- 기업 회원 -->
+	<insert id="insertClientMember" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">	
+	INSERT INTO CLIENT (   
+			CLI_ID, 
+            BUSINESS_NUM, 
+            CLIENT_NAME, 
+            CLIENT_ADD, 
+            MANAGER_NAME, 
+            MANAGER_RANK, 
+            CLIENT_CEO, 
+            CLIENT_HOMEPAGE, 
+            CLIENT_SCALE, 
+            CLIENT_ANNI, 
+            CLIENT_SALES,
+            CLIENT_ADDRET,
+            CLIENT_ZIP,
+            CLIENT_ADDX,
+            CLIENT_ADDY
+            
+		) VALUES (
+			#{memId},
+			#{businessNum},
+            #{clientName},
+			#{clientAdd}, 
+            #{managerName}, 
+            #{managerRank}, 
+            #{clientCeo}, 
+            #{clientHomepage}, 
+            #{clientScale}, 
+            TO_DATE(#{clientAnni},'YYYY-MM-DD'),
+            #{clientSales},
+            #{clientAddret},
+            #{clientZip},
+            TO_NUMBER(#{clientAddx}),
+            TO_NUMBER(#{clientAddy})
+		)                      
+	</insert>
+	<!-- 아이디 중복 검사 -->
+	<select id="idCheck" parameterType="String" resultType="int">
+		SELECT COUNT(*) COUNT
+		FROM MEMBER
+		WHERE MEM_ID = #{value}
+	</select>
+	
+	<!-- 기술스택 -->
+	<select id="findTechCodeByKeyword" parameterType="String" resultType="kr.or.ddit.iteams.outs.login.vo.TechCodeVO">
+		SELECT *
+		FROM TECH_CODE
+		WHERE DEV_STACK LIKE #{value}||'%'
+    	ORDER BY DEV_STACK ASC 
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="changePassword" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+		UPDATE MEMBER
+		SET MEM_PASS = #{memPass}
+		WHERE MEM_ID = #{memId}
+	</update>
+	
+	<insert id="insertProfileImage" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+		UPDATE DEV
+		SET DEV_IMG = #{devImg}
+		WHERE DEV_ID = #{memId}
+	</insert>
+	
+</mapper>

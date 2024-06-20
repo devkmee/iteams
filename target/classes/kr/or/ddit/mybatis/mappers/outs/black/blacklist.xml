@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.blacklist.dao.BlacklistDAO">
+
+<select id="selectTotalRecord" resultType="int">
+	SELECT COUNT(*)
+    FROM BLACKLIST
+</select>
+
+<select id="selectBlackList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+	              black_no
+	            , admin_id
+	            , bb.mem_id
+	            , to_char(reg_date, 'YYYY.MM.DD') as reg_date
+	            , cleared_ny
+	            , to_char(clear_date, 'YYYY.MM.DD') as clear_date
+	            , clear_admin
+	            , black_content
+	            , mem_role
+	        FROM
+	            blacklist bb left outer join member mm on(bb.mem_id = mm.mem_id)
+			ORDER BY reg_date DESC
+		) A  
+	) B  
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<insert id="insertMemToBlack">
+<selectKey keyProperty="blackNo" resultType="String" order="BEFORE">
+	SELECT GBOARD_SEQ.NEXTVAL AS BO_NUM
+	FROM DUAL
+</selectKey>
+	INSERT
+		INTO
+		BLACKLIST(
+			  BLACK_NO
+			, ADMIN_ID
+			, MEM_ID
+			, REG_DATE
+			, CLEARED_NY
+			, CLEAR_DATE
+			, CLEAR_ADMIN
+			, BLACK_CONTENT
+		)
+	VALUES(
+		  #{blackNo}
+		, #{memId}
+		, #{devId}
+		, SYSDATE
+		, NULL
+		, NULL
+		, NULL
+		, #{blackContent}
+	)
+</insert>
+
+<update id="updateRepGen">
+	UPDATE GEN_BOARD
+	SET  PUBLIC_NY = 'N'
+		,DELETED_NY = 'Y'
+		,DELETE_MEMBER = #{memId}
+		,DELETE_DATE = SYSDATE
+	WHERE BO_NUM = #{boNum}
+</update>
+
+<select id="selectCheckBlack" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		BLACK_NO
+	FROM
+		BLACKLIST
+	WHERE
+		BLACK_NO = #{blackNo}
+</select>
+
+<update id="updateBlackToMem">
+	UPDATE
+		BLACKLIST
+	SET
+		  CLEARED_NY = 'Y'
+		, CLEAR_DATE = SYSDATE
+		, CLEAR_ADMIN = #{memId}
+	WHERE
+		BLACK_NO = #{blackNo}
+</update>
+
+<select id="selectREPTotal" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		GEN_BOARD
+	WHERE
+		    BO_REP >= 5
+		AND DELETE_MEMBER IS NULL
+		AND PUBLIC_NY = 'Y'
+</select>
+
+<select id="selectRepBoardList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT  
+				  BO_NUM
+				 ,BO_TITLE
+				 ,MEM_ID
+				 ,BO_CODE
+			FROM
+				GEN_BOARD
+			WHERE 
+				    BO_REP >= 5
+				AND DELETE_MEMBER IS NULL
+				AND PUBLIC_NY = 'Y'
+			ORDER BY WRITE_DATE DESC
+		) A
+	) B  
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectCheckGen" resultType="String">
+	SELECT BO_NUM
+	FROM GEN_BOARD
+	WHERE BO_NUM = #{boNum}
+</select>
+
+<update id="updateClearGen">
+	UPDATE GEN_BOARD
+	SET  BO_REP = 0
+	WHERE BO_NUM = #{boNum}
+</update>
+
+</mapper>

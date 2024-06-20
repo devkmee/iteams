@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.common.dao.BoardReplyDAO">
+
+	<select id="selectTotalRecords" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="int">
+		SELECT COUNT(*)
+		FROM REPLY A, GEN_BOARD B
+		WHERE A.BO_NUM = B.BO_NUM(+)
+		  AND A.BO_NUM = #{boNum}
+	</select>
+	
+	<select id="selectReplyList" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.ReplyTotalVO">
+		SELECT *
+		FROM(
+		SELECT
+			REP_NO
+			, A.BO_NUM
+			, REP_WRITER
+			, TO_CHAR(REP_WRITE_DATE,'YYYY-MM-DD HH24:MI') REP_WRITE_DATE
+			, TO_CHAR(REP_MODIFY_DATE,'YYYY-MM-DD HH24:MI') REP_MODIFY_DATE
+			, REP_CONTENT
+			, REP_DELETED_NY
+			, REP_DELETE_DATE
+		FROM
+			REPLY A, GEN_BOARD B
+		WHERE A.BO_NUM = B.BO_NUM(+)
+		  AND A.BO_NUM = #{boNum}
+		ORDER BY REP_WRITE_DATE DESC
+		)
+		WHERE ROWNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<update id="updateReply" parameterType="kr.or.ddit.iteams.common.vo.ReplyTotalVO">
+		UPDATE
+			REPLY
+		SET
+			REP_MODIFY_DATE = SYSDATE
+			, REP_CONTENT = #{repContent,jdbcType=VARCHAR}
+		WHERE
+			REP_NO = #{repNo,jdbcType=VARCHAR}		
+	</update>
+	
+	<insert id="insertReply" parameterType="kr.or.ddit.iteams.common.vo.ReplyTotalVO">
+		<selectKey keyProperty="repNo" keyColumn="REP_NO" order="BEFORE" resultType="string">
+			SELECT REPLY_SEQ.NEXTVAL REP_NO
+			FROM DUAL
+		</selectKey>
+		
+		INSERT
+			INTO
+			REPLY
+			(
+			REP_NO
+			, BO_NUM
+			, REP_WRITER
+			, REP_WRITE_DATE
+			, REP_MODIFY_DATE
+			, REP_CONTENT
+			, REP_DELETED_NY
+			)
+		VALUES(
+		#{repNo,jdbcType=VARCHAR}
+		, #{boNum,jdbcType=VARCHAR}
+		, #{repWriter,jdbcType=VARCHAR}
+		, SYSDATE
+		, SYSDATE
+		, #{repContent,jdbcType=VARCHAR}	
+		, 'N'
+		)		
+	</insert>
+	
+	<update id="deleteReply" parameterType="kr.or.ddit.iteams.common.vo.ReplyTotalVO">
+		DELETE REPLY
+		WHERE REP_NO = #{repNo,jdbcType=VARCHAR}
+	</update>
+</mapper>

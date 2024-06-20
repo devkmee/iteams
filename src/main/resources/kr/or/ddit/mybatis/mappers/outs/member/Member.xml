@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.outs.member.dao.MemberDAO">
+
+	<sql id="searchFrag">
+		<trim prefix=" WHERE " prefixOverrides=" AND ">
+			MEM_ROLE != 'ADMIN'
+			<if test="detailSearch neq null and searchVO neq null">
+<!-- 				<choose> -->
+<!-- 					<when test="searchVO.searchType eq 'memId'"> -->
+<!-- 						MEM_ROLE = #{detailSearch.memRole} -->
+<!-- 						AND -->
+<!-- 						INSTR(MEM_ID, #{searchVO.searchWord}) > 0 -->
+<!-- 					</when> -->
+<!-- 					<otherwise> -->
+<!-- 						MEM_ROLE = #{detailSearch.memRole} -->
+<!-- 						AND -->
+<!-- 						INSTR(DEV_NAME, #{searchVO.searchWord}) > 0 -->
+<!-- 						OR -->
+<!-- 						MEM_ROLE = #{detailSearch.memRole} -->
+<!-- 						AND -->
+<!-- 						INSTR(CLIENT_NAME, #{searchVO.searchWord}) > 0 -->
+<!-- 					</otherwise> -->
+<!-- 				</choose> -->
+					<if test="@org.apache.commons.lang3.StringUtils@isBlank(detailSearch.memRole) and @org.apache.commons.lang3.StringUtils@isBlank(searchVO.searchWord)">
+						AND 1=1
+					</if>
+					<if test="detailSearch.memRole eq 'DEV'">
+						<if test="searchVO.searchType eq 'memId' and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+							AND
+ 							INSTR(MEM_ID, #{searchVO.searchWord}) > 0
+						</if>			
+						<if test="searchVO.searchType neq 'memId' and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+							AND
+							INSTR(DEV_NAME, #{searchVO.searchWord}) > 0
+						</if>
+						<if test="@org.apache.commons.lang3.StringUtils@isBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+						</if>
+					</if>
+					<if test="detailSearch.memRole eq 'CLIENT'">
+						<if test="searchVO.searchType eq 'memId' and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+							AND
+ 							INSTR(MEM_ID, #{searchVO.searchWord}) > 0
+						</if>			
+						<if test="searchVO.searchType neq 'memId' and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+							AND
+							INSTR(CLIENT_NAME, #{searchVO.searchWord}) > 0
+						</if>
+						<if test="@org.apache.commons.lang3.StringUtils@isBlank(searchVO.searchWord)">
+							AND
+							MEM_ROLE = #{detailSearch.memRole}
+						</if>					
+					</if>
+					<if test="@org.apache.commons.lang3.StringUtils@isBlank(detailSearch.memRole)">
+						<if test="searchVO.searchType eq 'memId'">
+							AND
+ 							INSTR(MEM_ID, #{searchVO.searchWord}) > 0
+						</if>
+						<if test="@org.apache.commons.lang3.StringUtils@isBlank(searchVO.searchType) and @org.apache.commons.lang3.StringUtils@isNotBlank(searchVO.searchWord)">
+							AND
+							(INSTR(CLIENT_NAME, #{searchVO.searchWord}) > 0
+							OR
+							INSTR(DEV_NAME, #{searchVO.searchWord}) > 0)
+						</if>	
+					</if>			
+			</if>
+		</trim>
+	</sql>
+
+<select id="selectTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.BaseVO">
+	SELECT COUNT(*)
+    FROM MEMBER M FULL OUTER JOIN DEV D ON(D.DEV_ID = M.MEM_ID)
+                  FULL OUTER JOIN CLIENT C ON(C.CLI_ID = M.MEM_ID)
+	<include refid="searchFrag" />
+</select>
+
+<select id="selectMemberList" resultType="kr.or.ddit.iteams.common.vo.MemberTotalVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT M.MEM_ID
+			     , M.MEM_ROLE
+			     , D.DEV_NAME
+			     , C.CLIENT_NAME
+			FROM MEMBER M FULL OUTER JOIN DEV D ON(D.DEV_ID = M.MEM_ID)
+                          FULL OUTER JOIN CLIENT C ON(C.CLI_ID = M.MEM_ID)
+            <include refid="searchFrag" />
+			ORDER BY M.MEM_ID DESC
+		) A  
+	) B  
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+
+<delete id="deleteRealMember">
+	DELETE MEMBER
+	WHERE QUIT_NY = 'Y'
+</delete>
+
+<select id="selectQuitMemberList" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT MEM_ID
+	, MEM_ROLE
+	, MEM_PASS
+	, MEM_TEL
+	, MEM_MAIL
+	, JOIN_DATE
+	, QUIT_NY
+	, QUIT_DATE
+	, DEV_NAME
+	, DEV_BIR
+	, DEV_JOB
+	, DEV_TECH
+	, DEV_EDU
+	, DEV_CAREER
+	, DEV_PORT
+	, DEV_IMG
+	, PUBLIC_NY
+	, BUSINESS_NUM
+	, CLIENT_NAME
+	, CLIENT_ADD
+	, MANAGER_NAME
+	, MANAGER_RANK
+	, CLIENT_CEO
+	, CLIENT_HOMEPAGE
+	, CLIENT_SCALE
+	, CLIENT_ANNI
+	, CLIENT_SALES
+	FROM
+	LOGINVIEW
+	WHERE QUIT_NY = 'Y' 
+</select>
+
+<select id="selectDevInfo" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+SELECT A.DEV_ID, A.DEV_NAME, A.DEV_BIR, B.MEM_MAIL, B.MEM_TEL
+     , A.DEV_TECH, A.DEV_JOB, A.DEV_CAREER, A.DEV_EDU, A.DEV_PORT
+     , A.DEV_IMG 
+  FROM DEV A, MEMBER B 
+ WHERE A.DEV_ID = B.MEM_ID 
+   AND A.DEV_ID = #{memId}
+</select>
+
+
+<select id="selectDevPro" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+SELECT B.*
+FROM (
+	SELECT A.*, ROWNUM RNUM
+	FROM (
+		SELECT
+		PP.BO_NUM
+		, PP.PROJECT_NAME
+		, PP.PROJECT_JOB
+		, TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE
+		, TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE
+		, PP.COMPLETED_NY
+		, PP.PERMISSION_NY
+		, AA.HIRED_NY
+		, TO_CHAR(AA.APP_DATE, 'YYYY.MM.DD') AS APP_DATE
+		, (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME
+		FROM
+			PRO_BOARD PP LEFT OUTER JOIN PRO_APP AA ON(PP.BO_NUM = AA.BO_NUM)
+			             LEFT OUTER JOIN GEN_BOARD GG ON(PP.BO_NUM = GG.BO_NUM)             
+			WHERE
+			    AA.APP_ID = #{appId}
+			ORDER BY AA.APP_DATE DESC
+		) A  
+	) B
+WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+
+<select id="selectClientInfo" resultType="kr.or.ddit.iteams.common.vo.MasterVO">
+SELECT
+	A.BUSINESS_NUM
+	, A.CLIENT_ADD
+	, A.CLIENT_CEO
+	, B.MEM_TEL
+	, B.MEM_ID
+	, TO_CHAR(A.CLIENT_ANNI,'YYYY-MM-DD') CLIENT_ANNI
+	, A.CLIENT_SALES
+	, A.CLIENT_SCALE
+	, B.MEM_MAIL
+	, A.CLIENT_HOMEPAGE
+	, A.MANAGER_NAME
+	, A.CLIENT_NAME
+	, A.MANAGER_RANK
+FROM
+	CLIENT A , MEMBER B
+WHERE
+	A.CLI_ID = B.MEM_ID
+	AND A.CLI_ID = #{memId}
+</select>
+
+
+<!-- <select id="selectClientPro" resultType="kr.or.ddit.iteams.common.vo.MasterVO"> -->
+
+<!-- </select> -->
+
+
+<sql id="totalWhere">
+	<where>
+		<choose>
+			<when test=" @org.apache.commons.lang3.StringUtils@isNotBlank(boNum)">
+				BO_NUM = #{boNum}
+			</when>
+			<when test=" @org.apache.commons.lang3.StringUtils@isNotBlank(appId)">
+				APP_ID = #{appId}
+			</when>
+		</choose>
+	</where>
+</sql>
+<select id="selectAPPTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM
+		PRO_APP
+	<include refid="totalWhere" />
+</select>
+
+<select id="selectInviteTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM 
+		INVITE
+	WHERE
+		DEV_ID = #{memId}
+</select>
+
+<select id="selectInviteListForDev" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+	FROM (
+		SELECT A.*, ROWNUM RNUM
+		FROM (
+			SELECT
+				  II.INVITE_NO
+				, II.PRO_NO
+				, TO_CHAR(II.INVITE_DATE, 'YY.MM.DD') AS INVITE_DATE
+				, II.INVITE_STATE
+				, II.INVITE_AUTH
+				, PP.PROJECT_NAME
+				, CC.CLIENT_NAME
+				, II.INVITE_PRICE
+			FROM
+				TBL_PRO PP LEFT OUTER JOIN INVITE II ON (PP.PRO_NO = II.PRO_NO)
+						   LEFT OUTER JOIN CLIENT CC ON (PP.CLI_ID = CC.CLI_ID)
+			WHERE 
+				II.DEV_ID = #{memId} 
+		) A
+	) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectOngoingProject" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT BB.*
+	FROM (
+		SELECT AA.*, ROWNUM RNUM
+		FROM (
+			SELECT A.PROJECT_NAME
+				 , TO_CHAR(A.CREATE_DATE,'YY.MM.DD') AS CREATE_DATE
+				 , TO_CHAR(A.COMPLETE_DATE,'YY.MM.DD') AS COMPLETE_DATE
+				 ,  B.AUTHORITY
+				 , TO_CHAR(B.JOIN_DATE, 'YY.MM.DD') AS JOIN_DATE 
+	  		FROM TBL_PRO A, PROJECT_MEM B 
+	 		WHERE A.PRO_NO = B.PRO_NO 
+	   		AND B.DEV_ID = #{memId} 
+	   		AND A.PROJECT_STATE = 'ING' 
+		) AA
+	) BB
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectOngoingTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM 
+		TBL_PRO A, PROJECT_MEM B
+	WHERE 
+		A.PRO_NO = B.PRO_NO 
+	  AND 
+	    B.DEV_ID = #{memId} 
+	  AND 
+	    A.PROJECT_STATE = 'ING' 
+</select>
+
+<select id="selectEndProject" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT BB.*
+	FROM (
+		SELECT AA.*, ROWNUM RNUM
+		FROM (
+			SELECT A.PROJECT_NAME, TO_CHAR(A.COMPLETE_DATE,'YY.MM.DD') AS COMPLETE_DATE, A.CLI_ID,  B.AUTHORITY, TO_CHAR(B.JOIN_DATE, 'YY.MM.DD') AS JOIN_DATE
+	  		FROM TBL_PRO A, PROJECT_MEM B 
+	 		WHERE A.PRO_NO = B.PRO_NO 
+	   		AND B.DEV_ID = #{memId} 
+	   		AND A.PROJECT_STATE = 'END' 
+		) AA
+	) BB
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<select id="selectEndTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM 
+		TBL_PRO A, PROJECT_MEM B
+	WHERE 
+		A.PRO_NO = B.PRO_NO 
+	  AND 
+	    B.DEV_ID = #{memId} 
+	  AND 
+	    A.PROJECT_STATE = 'END' 
+</select>
+
+
+<resultMap type="kr.or.ddit.iteams.common.vo.MasterVO" id="selectAtt" autoMapping="true">
+	<id property="attNo" column="ATT_NO"/>
+	<association property="attachVO" javaType="kr.or.ddit.iteams.common.vo.AttachTotalVO" autoMapping="true">
+		<id property="attNo" column="ATT_NO" /> 
+	</association>
+</resultMap>
+<select id="selectDevAtt" resultMap="selectAtt" parameterType="string">
+	SELECT
+		ATT_NO, ATTACH_NAME, ATTACH_ORIGIN
+	FROM 
+		PRO_ATTACH
+	WHERE
+		DEV_ID = #{memId}
+	AND
+		PROIMAGE_NY = 'N'		
+</select>
+
+
+<update id="updateDev1" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+	
+	<selectKey keyProperty="devImg" keyColumn="DEV_IMG" order="BEFORE" resultType="string">
+		SELECT ATT_NO DEV_IMG
+		FROM PRO_ATTACH
+		WHERE DEV_ID = #{memId}
+		  AND PROIMAGE_NY = 'Y'
+	</selectKey>
+	
+	UPDATE DEV
+	   SET DEV_NAME = #{devName,jdbcType=VARCHAR}
+		   , DEV_TECH = #{devTech,jdbcType=VARCHAR}
+		   , DEV_JOB = #{devJob,jdbcType=VARCHAR}
+		   , DEV_CAREER = #{devCareer,jdbcType=VARCHAR}
+		   , DEV_EDU = #{devEdu,jdbcType=VARCHAR}
+		   , DEV_PORT = #{devPort,jdbcType=VARCHAR}
+	       <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(devImg)">
+		   , DEV_IMG = #{devImg,jdbcType=VARCHAR}
+			</if>
+	 WHERE DEV_ID = #{memId,jdbcType=VARCHAR}
+</update>
+
+
+<update id="updateDev2" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+	UPDATE MEMBER
+	   SET MEM_TEL = #{memTel,jdbcType=VARCHAR} 
+	 WHERE MEM_ID = #{memId,jdbcType=VARCHAR}
+</update>
+
+
+<update id="updateClient" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+	UPDATE CLIENT
+	   SET CLIENT_NAME = #{clientName,jdbcType=VARCHAR}
+	       , CLIENT_ADD = #{clientAdd,jdbcType=VARCHAR}
+	       , CLIENT_CEO = #{clientCeo,jdbcType=VARCHAR}
+	       , CLIENT_SALES = #{clientSales,jdbcType=VARCHAR}
+	       , CLIENT_SCALE = #{clientScale,jdbcType=NUMERIC}
+	       , CLIENT_HOMEPAGE = #{clientHomepage,jdbcType=VARCHAR}
+	       , MANAGER_NAME = #{managerName,jdbcType=VARCHAR}
+	       , MANAGER_RANK = #{managerRank,jdbcType=VARCHAR}
+	 WHERE CLI_ID = #{memId}
+</update>
+
+
+<update id="updateClientMember" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+	UPDATE MEMBER 
+	   SET MEM_TEL = #{memTel,jdbcType=VARCHAR}
+	WHERE MEM_ID = #{memId}
+</update>
+
+
+<delete id="deleteAtt" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+	DELETE FROM PRO_ATTACH
+	 WHERE DEV_ID = #{memId}
+	   AND PROIMAGE_NY = 'Y' 
+</delete>
+
+<select id="selectBOARDTotalRecord" resultType="int" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT
+		COUNT(*)
+	FROM
+		GEN_BOARD
+	WHERE MEM_ID = #{memId}
+</select>
+
+<select id="selectApplyListForClient" resultType="kr.or.ddit.iteams.common.vo.MasterVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+	SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM (
+				SELECT
+				     PP.BO_NUM
+				   , TO_CHAR(PP.PERMISSION_DATE, 'YYYY.MM.DD') AS PERMISSION_DATE
+                   , PP.PROJECT_NAME
+                   , PP.PROJECT_RECRUIT
+                   , PP.PROJECT_TECH
+                   , TO_CHAR(PP.LIMIT_DATE, 'YYYY.MM.DD') AS LIMIT_DATE 
+				   , TO_CHAR(PP.LIMIT_MODIFY_DATE, 'YYYY.MM.DD') AS LIMIT_MODIFY_DATE 
+				   , GG.BO_TITLE 
+				   , (SELECT CLIENT_NAME FROM CLIENT C WHERE C.CLI_ID = GG.MEM_ID) AS CLIENT_NAME 
+				FROM 
+				   PRO_BOARD PP
+				LEFT OUTER JOIN GEN_BOARD GG ON
+				   (PP.BO_NUM = GG.BO_NUM)
+				WHERE
+				   PP.PERMISSION_NY = 'Y'
+				   AND PP.COMPLETED_NY = 'N'
+				   AND GG.MEM_ID = #{memId}
+				ORDER BY
+				   GG.WRITE_DATE DESC
+			) A
+		) B
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+</select>
+
+<update id="deleteMember" parameterType="string">
+	UPDATE MEMBER
+	   SET QUIT_NY = 'Y'
+	       , QUIT_DATE = SYSDATE 
+	 WHERE MEM_ID = #{memId,jdbcType=VARCHAR}
+</update>
+
+
+</mapper>

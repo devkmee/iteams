@@ -1,0 +1,186 @@
+@charset "UTF-8";
+
+body{
+	font-family: 'NanumSquareRound'; 
+}
+.project-txt-lighter {
+	display: block;
+	font-size: 15px;
+	font-weight: lighter;
+}
+
+
+.profile-wrap {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.profile-name {
+	font-size: 16px;
+	width: 186px;
+}
+
+.profile-name > div:first-of-type {
+	font-size: 18px;
+	padding-top: 10px;
+}
+
+.profile-img-wrap {
+/* 	background-image: url(../images/museon.jpg); */
+	width: 70px;
+	height: 70px;
+	background-position: center center;
+	background-repeat: no-repeat;
+    border-radius: 50% !important;
+    margin-left: 20px;
+}
+.hireProfile {
+	width: 70px;
+	height: 70px;
+	background-position: center center;
+	background-repeat: no-repeat;
+    border-radius: 50% !important;
+    margin-left: 20px;
+}
+
+.profile-img-wrap2 {
+	background-image: url(../images/sik.jpg);
+	width: 70px;
+	height: 70px;
+	background-position: center center;
+	background-repeat: no-repeat;
+    border-radius: 50% !important;
+    margin-left: 20px;
+}
+
+.profile-img-wrap3 {
+	background-image: url(../images/zzinew.jpg);
+	width: 70px;
+	height: 70px;
+	background-position: center center;
+	background-repeat: no-repeat;
+    border-radius: 50% !important;
+    margin-left: 20px;
+}
+.profile-img-wrap4 {
+	background-image: url(../images/na.jpg);
+	width: 70px;
+	height: 70px;
+	background-position: center center;
+	background-repeat: no-repeat;
+    border-radius: 50% !important;
+    margin-left: 20px;
+}
+
+.table td, .table th {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border-top: 1px solid #dee2e6;
+}
+
+tbody > tr {
+	cursor: pointer;
+}
+
+.scrap-box-wrap {
+	display: flex;
+    margin-bottom: 20px;
+}
+
+.scrap-box-wrap > .scrap-box:not(:last-child) {
+    margin-right: 20px;
+}
+
+.scrap-box {
+    width: 500px;
+    height: 200px;
+    border: 1px solid #cdcdcd;
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    position: relative;
+}
+
+.scrap-img {
+    width: 200px;
+    overflow: hidden;
+}
+
+.scrap-img > img {
+	width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scrap-txt {
+	padding: 15px 0px 0px 22px;
+}
+
+.scrap-txt > span {
+	display: block;
+    color: #585858;
+    line-height: 27px;
+    font-size: 15px;
+}
+
+.btn-close {
+	position: absolute;
+    right: 7px;
+    top: 5px;
+}
+
+.span-txt {
+	display: block;
+    line-height: 2;
+}
+
+.search-select {
+    width: 180px;
+    border: 1px solid #a9acaf;
+    border-radius: 4px;
+    padding-left: 10px;
+}
+
+.spec-txt {
+    line-height: 38px;
+    margin: 0px 8px 0px 8px;	
+}
+
+.team-wrap {
+	width: 1020px;
+    margin: 0 auto;
+}
+
+.team-name {
+	color: #333;
+	padding-top: 8px;
+	font-size: 20px;
+}
+
+.prolist-table {
+    border-top: 2px solid #9e9e9e;
+    border-bottom: 1px solid #9e9e9e;
+    width: 100%;
+}
+
+.prolist-table > tbody > tr > th {
+    width: 250px;
+    padding: 10px 10px 10px 38px;
+    padding-left: 45px;
+    text-align: left;
+    font-weight: normal;
+    color: #222;
+    background-color: #f1f1f1;
+    border-top: 1px solid #ccc;
+}
+
+.prolist-table > tbody > tr > td{
+    height: 40px;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    padding: 10px 30px 10px 40px;
+    font-size: 16px;
+    text-align: left;
+}

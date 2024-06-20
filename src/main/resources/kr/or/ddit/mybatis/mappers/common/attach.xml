@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.iteams.common.dao.AttachDAO">
+	<insert id="insertAttachForOuts" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<selectKey keyProperty="attNo" keyColumn="ATT_NO" resultType="string" order="BEFORE">
+			SELECT MAX(TO_NUMBER(ATT_NO)) + 1 ATT_NO
+			FROM GEN_ATTACH
+		</selectKey>
+		<if test="attachList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="attachList" item="atch" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO GEN_ATTACH
+			    (ATT_NO
+			    , BO_NUM
+				, ATTACH_NAME
+				, ATTACH_ORIGIN
+				, ATTACH_SIZE
+				, UPLOAD_DATE
+				, ATTACH_MIME
+				, FTP_SAVEDPATH
+				)
+			VALUES
+			(TO_NUMBER(#{attNo})+#{idx}
+			, #{boNum,jdbcType=VARCHAR}
+			, #{atch.attachName,jdbcType=VARCHAR}
+			, #{atch.attachOrigin,jdbcType=VARCHAR}
+			, #{atch.attachSize,jdbcType=NUMERIC}
+			, SYSDATE
+			, #{atch.attachMime,jdbcType=VARCHAR}
+			, #{atch.ftpSavedpath,jdbcType=VARCHAR}
+			)
+		</foreach>
+		
+		<if test="attachList.size gt 0">
+			SELECT * FROM DUAL
+		</if>
+	</insert>
+	
+	<insert id="insertAttachForProfile" parameterType="kr.or.ddit.iteams.outs.login.vo.JoinDevRequestVO">
+		<selectKey keyProperty="attNo" keyColumn="ATT_NO" resultType="string" order="BEFORE">
+			SELECT MAX(TO_NUMBER(ATT_NO)) + 1 ATT_NO
+			FROM PRO_ATTACH
+		</selectKey>
+		
+		<if test="attachList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="attachList" item="atch" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO PRO_ATTACH
+			    (ATT_NO
+			    , DEV_ID
+				, ATTACH_NAME
+				, ATTACH_ORIGIN
+				, ATTACH_SIZE
+				, UPLOAD_DATE
+				, ATTACH_MIME
+				, FTP_SAVEDPATH
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(atch.proimageNy)">
+				, PROIMAGE_NY
+				</if>
+				)
+			VALUES
+			(TO_NUMBER(#{attNo})+#{idx}
+			, #{memId,jdbcType=VARCHAR}
+			, #{atch.attachName,jdbcType=VARCHAR}
+			, #{atch.attachOrigin,jdbcType=VARCHAR}
+			, #{atch.attachSize,jdbcType=NUMERIC}
+			, SYSDATE
+			, #{atch.attachMime,jdbcType=VARCHAR}
+			, #{atch.ftpSavedpath,jdbcType=VARCHAR}
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(atch.proimageNy)">
+				,#{atch.proimageNy,jdbcType=VARCHAR}
+			</if>
+			)
+		</foreach>
+		
+		<if test="attachList.size gt 0">
+			SELECT * FROM DUAL
+		</if>		
+	</insert>
+	
+	<insert id="insertAttachForPMS" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		<selectKey resultType="string" keyProperty="attNo" order="BEFORE" keyColumn="ATT_NO">
+			SELECT MAX(TO_NUMBER(ATT_NO)) + 1 ATT_NO
+			FROM PMS_ATT
+		</selectKey>
+		
+		<if test="attachList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="attachList" item="atch" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO PMS_ATT
+			    (ATT_NO
+				, ATTACH_NAME
+				, ATTACH_ORIGIN
+<!-- 				, ATTACH_SAVEDPATH -->
+				, ATTACH_SIZE
+				, UPLOAD_DATE
+				, ATTACH_MIME
+				, FTP_SAVEDPATH
+				)
+			VALUES
+			( TO_NUMBER(#{attNo}) + #{idx}
+			, #{atch.attachName,jdbcType=VARCHAR}
+			, #{atch.attachOrigin,jdbcType=VARCHAR}
+<!-- 			, #{atch.attachSavedpath,jdbcType=VARCHAR} -->
+			, #{atch.attachSize,jdbcType=NUMERIC}
+			, SYSDATE
+			, #{atch.attachMime,jdbcType=VARCHAR}
+			, #{atch.ftpSavedpath,jdbcType=VARCHAR}
+			)
+		</foreach>
+		
+		<if test="attachList.size gt 0">
+			SELECT * FROM DUAL
+		</if>
+	</insert>
+	
+	<insert id="insertAttachInfoForWork" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		
+<!-- 		<selectKey resultType="string" keyProperty="attNo" order="BEFORE" keyColumn="ATT_NO"> -->
+<!-- 			SELECT PMS_ATTACH_SEQ.CURRVAL ATT_NO -->
+<!-- 			FROM DUAL -->
+<!-- 		</selectKey> -->
+		
+		<if test="attachList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="attachList" item="atch" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO WORK_ATTACH
+			    (WORK_NUM
+				, ATT_NO
+				)
+			VALUES
+			(#{workNum,jdbcType=VARCHAR}
+			, TO_NUMBER(#{attNo})+#{idx}
+			)
+		</foreach>
+		
+		<if test="attachList.size gt 0">
+			SELECT * FROM DUAL
+		</if>
+	</insert>
+	
+	<insert id="insertAttachForPMSBoard" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" >
+<!-- 		<selectKey resultType="string" keyProperty="attNo" order="BEFORE" keyColumn="ATT_NO"> -->
+<!-- 			SELECT PMS_ATTACH_SEQ.CURRVAL ATT_NO -->
+<!-- 			FROM DUAL -->
+<!-- 		</selectKey> -->
+		
+		<if test="attachList.size gt 0">
+			INSERT ALL
+		</if>
+		<foreach collection="attachList" item="atch" index="idx">
+<!-- 		인덱스는 0부터 시작 -->
+			 INTO PBOARD_ATT
+			    (BO_NUM
+				, ATT_NO
+				)
+			VALUES
+			(#{boNum,jdbcType=VARCHAR}
+			, TO_NUMBER(#{attNo}) + #{idx}
+			)
+		</foreach>
+		
+		<if test="attachList.size gt 0">
+			SELECT * FROM DUAL
+		</if>
+	</insert>
+	
+	<select id="selectAttachForPMS" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO">
+		SELECT
+			ATT_NO
+			, ATTACH_NAME
+			, ATTACH_ORIGIN
+			, ATTACH_SIZE
+			, UPLOAD_DATE
+			, ATT_MODIFY_MEMBER
+			, ATT_MODIFY_DATE
+			, ATT_DELETED_NY
+			, ATT_DELETE_MEMBER
+			, ATT_DELETE_DATE
+			, ATTACH_MIME
+			, FTP_SAVEDPATH
+		FROM
+			PMS_ATT
+		WHERE
+			ATT_NO = #{attNo}	
+	</select>
+	
+	<select id="selectAttachListForWork" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO">
+		SELECT 	
+			A.ATT_NO
+			, ATTACH_NAME
+			, ATTACH_ORIGIN
+			, ATTACH_SIZE
+			, UPLOAD_DATE
+			, ATT_MODIFY_MEMBER
+			, ATT_MODIFY_DATE
+			, ATT_DELETED_NY
+			, ATT_DELETE_MEMBER
+			, ATT_DELETE_DATE
+			, ATTACH_MIME
+			, FTP_SAVEDPATH
+		FROM PMS_ATT A, WORK_ATTACH B
+		WHERE A.ATT_NO = B.ATT_NO 
+		  AND B.WORK_NUM = #{workNum}
+	</select>
+	
+	<select id="selectAttachForProfile" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO">
+		SELECT
+			ATT_NO
+			, DEV_ID
+			, ATTACH_NAME
+			, ATTACH_ORIGIN
+			, ATTACH_SIZE
+			, UPLOAD_DATE
+			, MODIFY_DATE
+			, ATTACH_MIME
+			, FTP_SAVEDPATH
+		FROM
+			PRO_ATTACH
+		WHERE ATT_NO = #{attNo}
+	</select>
+	
+	<select id="selectAttachForOuts" parameterType="kr.or.ddit.iteams.common.vo.MasterVO" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO">
+		SELECT
+			ATT_NO
+			, BO_NUM
+			, ATTACH_NAME
+			, ATTACH_ORIGIN
+			, ATTACH_SIZE
+			, ATTACH_MIME
+			, FTP_SAVEDPATH
+		FROM
+			GEN_ATTACH
+		WHERE
+			ATT_NO = #{attNo}
+	</select>
+	
+	<insert id="insertDocumentAttach" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		
+		<selectKey keyProperty="docNum" keyColumn="DOC_NUM" order="BEFORE" resultType="string">
+			SELECT DOCUMENT_SEQ.NEXTVAL DOC_NUM
+			FROM DUAL
+		</selectKey>
+		
+		INSERT
+			INTO
+			DOCUMENT
+		(DOC_NUM
+			, PRO_NO
+			, ATT_NO
+			, EDIT_RANGE
+			, DEV_ID
+			, DOC_TITLE
+			, DOC_WRITER)
+		VALUES(#{docNum,jdbcType=VARCHAR}
+		, #{proNo,jdbcType=VARCHAR}
+		, #{attNo,jdbcType=VARCHAR}
+		, #{editRange,jdbcType=VARCHAR}
+		, #{devId,jdbcType=VARCHAR}
+		, #{docTitle,jdbcType=VARCHAR}
+		, #{docWriter,jdbcType=VARCHAR})
+	</insert>
+	
+	<delete id="deleteAttachForPMS" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		DELETE FROM PMS_ATT
+		<where>
+			<choose>
+				<when test="attachList neq null and attachList.size gt 0">
+					<foreach collection="attachList" item="delAttVO" open="ATT_NO IN (" close=")" separator=",">
+						${delAttVO.attNo}
+					</foreach>
+				</when>
+				<otherwise>
+					ATT_NO IS NULL				
+				</otherwise>
+			</choose>
+		</where>
+	</delete>
+	
+	<delete id="deleteAttachForOuts" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		DELETE FROM GEN_ATTACH
+		<where>
+			<choose>
+				<when test="attachList neq null and attachList.size gt 0">
+					<foreach collection="attachList" item="delAttVO" open="ATT_NO IN (" close=")" separator=",">
+						${delAttVO.attNo}
+					</foreach>
+				</when>
+				<otherwise>
+					ATT_NO IS NULL				
+				</otherwise>
+			</choose>
+		</where>
+	</delete>
+
+	<delete id="deleteAttachForProfile" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		DELETE FROM PRO_ATTACH
+		<where>
+			<choose>
+				<when test="attachList neq null and attachList.size gt 0">
+					<foreach collection="attachList" item="delAttVO" open="ATT_NO IN (" close=")" separator=",">
+						${delAttVO.attNo}
+					</foreach>
+				</when>
+				<otherwise>
+					ATT_NO IS NULL				
+				</otherwise>
+			</choose>
+		</where>
+	</delete>
+	
+		<select id="selectAttachListForGenBoard" resultType="kr.or.ddit.iteams.common.vo.AttachTotalVO" parameterType="kr.or.ddit.iteams.common.vo.MasterVO">
+		SELECT
+			  BB.BO_NUM
+			, MEM_ID
+			, BO_TITLE
+			, BO_CONTENT
+			, TO_CHAR(WRITE_DATE, 'YYYY.MM.DD') AS WRITE_DATE
+			, MODIFY_MEMBER
+			, TO_CHAR(MODIFY_DATE, 'YYYY.MM.DD') AS MODIFY_DATE
+			, BO_HIT
+			, PUBLIC_NY
+			, AA.ATT_NO
+			, AA.ATTACH_ORIGIN
+		FROM
+			GEN_BOARD BB LEFT OUTER JOIN GEN_ATTACH AA ON (BB.BO_NUM = AA.BO_NUM)
+		WHERE
+			BB.BO_NUM = #{boNum}
+		AND PUBLIC_NY = 'Y'
+	</select>
+	
+</mapper>

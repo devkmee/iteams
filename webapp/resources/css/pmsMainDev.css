@@ -1,0 +1,23 @@
+@charset "UTF-8";
+
+.project-content-wrap {
+	
+}
+
+.project-summary {
+	font-size: 26px;
+	margin-top: 20px;
+}
+
+.project-summary > span {
+	font-size: 20px;
+}
+
+.project-content-table {
+	width: 40%;
+}
+
+.project-content-table {
+	text-align: center;
+	margin-top: 30px;
+}
