@@ -1,0 +1,4 @@
+*.HTML linguist-vendored
+*.css linguist-vendored
+*.scss linguist-vendored
+*.Java linguist-vendored=false
