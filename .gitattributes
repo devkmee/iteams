@@ -1,6 +1,3 @@
-
-*.html linguist-vendored
-*.css linguist-vendored
 *.scss linguist-vendored
 *.styl linguist-vendored
 *.php linguist-vendored
